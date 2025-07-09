@@ -13,113 +13,89 @@
   <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
   <style>
     body {
-      /* Modern, calm background */
-      background: linear-gradient(135deg, #eaf6fb 0%, #e3e6f3 100%);
+      background: #F8FAFC;
       font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
-    }
-    .dataTables_wrapper .dataTables_filter input {
-      border: 1px solid #4F46E5;
-      border-radius: 0.375rem;
-      padding: 0.3rem 0.5rem;
-      font-size: 1rem;
-      background: #f7fafc;
       color: #222;
-      transition: border 0.2s;
+      font-size: 1rem;
     }
+    .dataTables_wrapper .dataTables_filter input,
     .dataTables_wrapper .dataTables_length select {
       border: 1px solid #CBD5E1;
       border-radius: 0.375rem;
-      padding: 0.2rem 0.5rem;
-      background: #f7fafc;
+      padding: 0.3rem 0.5rem;
+      background: #fff;
       color: #222;
+      font-size: 0.99rem;
     }
     table.dataTable thead th {
-      background: #f7f9fb !important;
-      color: #3730a3 !important;
+      background: #F3F4F6 !important;
+      color: #334155 !important;
       font-weight: 600;
       font-size: 1rem;
-      border-bottom: 2px solid #6366f1;
+      border-bottom: 2px solid #CBD5E1;
     }
     table.dataTable tbody td {
       font-weight: 400;
-      color: #1e293b;
+      color: #222;
       background: #fff;
       font-size: 0.98rem;
     }
     table.dataTable tbody tr:nth-child(even) td {
-      background: #f3f4f6;
+      background: #F1F5F9;
     }
     table.dataTable tbody tr:hover td {
-      background: #dbeafe !important;
+      background: #E0E7EF !important;
     }
-    .dt-button, .ver-detalhes, .ver-detalhes-mini {
-      background: linear-gradient(90deg, #6366f1 30%, #818cf8 100%);
+    .ver-detalhes, .ver-detalhes-mini {
+      background: #334155;
       color: #fff;
       font-weight: 500;
       border: none;
       border-radius: 0.375rem;
-      padding: 0.3rem 0.85rem;
-      font-size: 0.95rem;
-      transition: background 0.2s, box-shadow 0.2s;
-      box-shadow: 0 1px 8px #6366f125;
+      padding: 0.25rem 0.8rem;
+      font-size: 0.98rem;
+      transition: background 0.2s;
     }
-    .dt-button:hover, .ver-detalhes:hover, .ver-detalhes-mini:hover {
-      background: linear-gradient(90deg, #4f46e5 30%, #6366f1 100%);
+    .ver-detalhes:hover, .ver-detalhes-mini:hover {
+      background: #64748B;
       color: #fff;
-      box-shadow: 0 2px 12px #6366f140;
     }
-    /* Unified mini-table look */
     .mini-table thead th {
-      background: #f7f9fb !important;
-      color: #3730a3;
+      background: #F3F4F6 !important;
+      color: #334155;
       font-weight: 600;
       font-size: 0.96rem;
-      border-bottom: 2px solid #818cf8;
+      border-bottom: 2px solid #CBD5E1;
     }
     .mini-table tbody td {
       font-weight: 400;
-      color: #1e293b;
+      color: #222;
       background: #fff;
       font-size: 0.97rem;
       padding-top: 0.35rem;
       padding-bottom: 0.35rem;
     }
     .mini-table tbody tr:nth-child(even) td {
-      background: #f3f4f6;
+      background: #F1F5F9;
     }
     .mini-table tbody tr:hover td {
-      background: #dbeafe;
+      background: #E0E7EF;
     }
-    .mini-table {
-      border-radius: 0.5rem;
-      overflow: hidden;
-      box-shadow: 0 1px 8px #6366f110;
-    }
-    /* Tabela de detalhes do modal */
-    #modalDetalhes table {
-      border-radius: 0.5rem;
-      overflow: hidden;
-      box-shadow: 0 1px 8px #6366f110;
-    }
-    #modalDetalhes th,
-    #modalDetalhes td {
+    .mini-table { border-radius: 0.5rem; }
+    #modalDetalhes table { border-radius: 0.5rem; }
+    #modalDetalhes th, #modalDetalhes td {
       font-weight: 400;
-      color: #1e293b;
+      color: #222;
       font-size: 0.97rem;
-      padding-top: 0.35rem;
-      padding-bottom: 0.35rem;
     }
     #modalDetalhes th {
-      background: #f7f9fb;
-      color: #3730a3;
+      background: #F3F4F6;
+      color: #334155;
       font-weight: 600;
     }
-    #modalDetalhes tr {
-      border-bottom: 1px solid #e0e7ef;
-    }
-    /* Loading spinner */
+    #modalDetalhes tr { border-bottom: 1px solid #E0E7EF; }
     #loadingOverlay {
-      background: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.93);
       position: fixed;
       z-index: 1000;
       inset: 0;
@@ -128,29 +104,27 @@
       justify-content: center;
     }
     .spinner {
-      border: 6px solid #e0e7ef;
-      border-top: 6px solid #6366f1;
+      border: 6px solid #CBD5E1;
+      border-top: 6px solid #334155;
       border-radius: 50%;
-      width: 56px;
-      height: 56px;
+      width: 48px;
+      height: 48px;
       animation: spin 1s linear infinite;
     }
     @keyframes spin {
       0% {transform: rotate(0deg);}
       100% {transform: rotate(360deg);}
     }
-    /* Avisos */
     .alert-box {
-      border-left: 6px solid #6366f1;
-      background: #eef2ff;
-      color: #3730a3;
-      padding: 0.8rem 1rem;
+      border-left: 6px solid #334155;
+      background: #F1F5F9;
+      color: #334155;
+      padding: 0.7rem 1rem;
       margin-bottom: 1rem;
       border-radius: 0.5rem;
       font-weight: 500;
       font-size: 1rem;
     }
-    /* Responsive tweaks */
     @media (max-width: 900px) {
       .mini-table, .dataTable { font-size:0.95rem; }
       #modalDetalhes table { font-size:0.94rem; }
@@ -166,22 +140,22 @@
   <div id="loadingOverlay" class="hidden">
     <div>
       <div class="spinner mx-auto"></div>
-      <div class="text-[#3730a3] text-lg mt-3 text-center font-bold">Carregando contratos...</div>
+      <div class="text-[#334155] text-lg mt-3 text-center font-bold">Carregando contratos...</div>
     </div>
   </div>
-  <header class="bg-gradient-to-r from-indigo-700 to-indigo-500 text-white p-5 shadow flex items-center justify-between">
-    <h1 class="text-2xl font-black tracking-tight">Dashboard de Análise de Contratos</h1>
+  <header class="bg-[#334155] text-white p-4 shadow flex items-center justify-between">
+    <h1 class="text-2xl font-bold tracking-tight">Dashboard de Análise de Contratos</h1>
     <div class="flex items-center gap-2">
       <button id="navTabela" class="nav-btn rounded px-4 py-2 font-medium active" aria-current="page" type="button">Tabela</button>
       <button id="navGraficos" class="nav-btn rounded px-4 py-2 font-medium" type="button">Gráficos</button>
     </div>
   </header>
-  <main class="flex-1 p-6">
+  <main class="flex-1 p-4">
     <div id="painelTabela">
       <div id="painelFiscaisCFISCON"></div>
       <section id="avisosVencimento" class="mb-6"></section>
-      <section class="bg-white p-6 rounded shadow mb-6">
-        <div class="mb-4">
+      <section class="bg-white p-4 rounded shadow mb-6">
+        <div class="mb-2">
           <label for="buscaUniversal" class="block text-sm font-semibold mb-1">Busca Universal</label>
           <input type="text" id="buscaUniversal" placeholder="Digite nome, CNPJ, objeto, número do contrato ou qualquer termo...">
         </div>
@@ -220,25 +194,21 @@
             <select id="filtroSituacao" class="w-full border rounded px-2 py-1"></select>
           </div>
         </div>
-        <div class="mt-4">
-          <button id="limparFiltros" class="bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-4 py-2 rounded font-medium">Limpar Filtros</button>
+        <div class="mt-3">
+          <button id="limparFiltros" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded font-medium">Limpar Filtros</button>
         </div>
       </section>
-      <section class="bg-white p-6 rounded shadow">
-        <h2 class="text-lg font-black text-indigo-700 mb-4">Tabela de Contratos</h2>
+      <section class="bg-white p-4 rounded shadow">
+        <h2 class="text-lg font-bold text-[#334155] mb-2">Tabela de Contratos</h2>
         <div class="overflow-x-auto">
           <table id="tabelaContratos" class="display w-full"></table>
         </div>
       </section>
     </div>
     <div id="painelGraficos" class="hidden">
-      <section class="bg-white p-6 rounded shadow mb-6">
-        <h2 class="text-lg font-black text-indigo-700 mb-4">Gráficos</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          <div>
-            <h3 class="font-semibold mb-2 text-sm text-gray-700">Situação dos Contratos</h3>
-            <canvas id="graficoSituacao"></canvas>
-          </div>
+      <section class="bg-white p-4 rounded shadow mb-6">
+        <h2 class="text-lg font-bold text-[#334155] mb-4">Gráficos</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
             <h3 class="font-semibold mb-2 text-sm text-gray-700">Contratos por Ano</h3>
             <canvas id="graficoAno"></canvas>
@@ -252,13 +222,13 @@
     </div>
   </main>
   <div id="modalDetalhes" class="fixed inset-4 z-50 bg-black bg-opacity-50 flex items-center justify-center hidden" aria-modal="true" role="dialog">
-    <div class="bg-white rounded shadow-lg modal-inner p-6 relative max-w-md w-full">
-      <button id="fecharModal" class="absolute top-2 right-2 text-gray-400 hover:text-indigo-400 text-2xl" title="Fechar" aria-label="Fechar"><span aria-hidden="true">×</span></button>
-      <h3 class="text-lg font-black text-indigo-700 mb-4" id="modalTitulo"></h3>
+    <div class="bg-white rounded shadow-lg modal-inner p-5 relative max-w-md w-full">
+      <button id="fecharModal" class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-2xl" title="Fechar" aria-label="Fechar"><span aria-hidden="true">×</span></button>
+      <h3 class="text-lg font-bold text-[#334155] mb-4" id="modalTitulo"></h3>
       <div id="modalConteudo" class="space-y-2 text-sm"></div>
     </div>
   </div>
-  <footer class="text-center text-indigo-700 text-sm py-4 font-semibold">
+  <footer class="text-center text-gray-700 text-sm py-4">
     ©️ 2025 Dashboard de Contratos - Exemplo Interativo
   </footer>
 <script>
@@ -267,10 +237,12 @@ const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTtD2VpTW
 let contratos = [];
 let contratosFiltrados = [];
 let tabela = null;
-let chartSituacao = null, chartAno = null, chartPrazo = null;
+let chartAno = null, chartPrazo = null;
 let termoBuscaUniversal = "";
 
 // --- FUNÇÕES AUXILIARES E FILTROS ---
+// (iguais ao código anterior, exceto a função desenharGraficos, que só terá os 2 gráficos restantes)
+
 function normSit(str) {
   return (str || "")
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
@@ -345,11 +317,11 @@ function renderPainelFiscaisCFISCON() {
     return;
   }
   fiscaisPresentes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
-  let html = `<div class="mb-6 p-4 bg-indigo-50 border-l-4 border-indigo-400 rounded shadow">
+  let html = `<div class="mb-6 p-4 bg-gray-50 border-l-4 border-gray-400 rounded shadow">
     <strong>Contratos C-FISCON:</strong>
     <div class="flex flex-wrap gap-2 mt-2">`;
   fiscaisPresentes.forEach((nome, idx) => {
-    html += `<button class="btn-fiscal-cfiscon bg-indigo-600 hover:bg-indigo-400 text-white px-3 py-1 rounded text-xs font-semibold" data-nome="${nome}">${nome}</button>`;
+    html += `<button class="btn-fiscal-cfiscon bg-gray-800 hover:bg-gray-600 text-white px-3 py-1 rounded text-xs font-semibold" data-nome="${nome}">${nome}</button>`;
   });
   html += `</div>
     <div id="cfiscon-contratos-lista" class="mt-4 hidden"></div>
@@ -369,8 +341,8 @@ function mostrarContratosFiscalCFISCON(nomeFiscal, btn) {
     );
   }).filter(c => c['N° Contrato'] && c['Contratado']);
   let html = `<div class="mb-2">
-    <span class="font-bold text-indigo-700">${nomeFiscal}</span>
-    <button class="ml-4 px-2 py-1 text-xs rounded bg-indigo-100 hover:bg-indigo-400 text-indigo-700 close-cfiscon-contratos" title="Fechar">Fechar</button>
+    <span class="font-bold text-gray-700">${nomeFiscal}</span>
+    <button class="ml-4 px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-400 text-gray-700 close-cfiscon-contratos" title="Fechar">Fechar</button>
   </div>`;
   if (contratosDoFiscal.length === 0) {
     html += `<div>Nenhum contrato encontrado para este fiscal nos filtros atuais.</div>`;
@@ -683,19 +655,20 @@ function atualizarTabela() {
     columns: columns,
     pageLength: 10,
     lengthMenu: [10, 50, 100, 200, 500],
+    deferRender: true,
     language: {
       url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json"
     },
     createdRow: function(row, data) {
       let dias = diasAteVencimento(data['Final Vigência']);
       if (dias !== null && dias >= 0 && dias <= 30) {
-        $(row).css('background-color', '#fef9c3');
+        $(row).css('background-color', '#FEF9C3');
       } else if (dias !== null && dias > 30 && dias <= 60) {
-        $(row).css('background-color', '#e0f2fe');
+        $(row).css('background-color', '#E0F2FE');
       }
       if (contratoTemFiscalCFISCON(data)) {
         $(row).css('font-weight', 'bold');
-        $(row).css('border-left', '4px solid #6366f1');
+        $(row).css('border-left', '4px solid #334155');
       } else {
         $(row).css('font-weight', '400');
         $(row).css('border-left', '');
@@ -797,7 +770,7 @@ function renderAvisoComMiniTabela(titulo, tipo, lista, boxId, labelBtn) {
         </tbody>
       </table>
     </div>
-    ${lista.length > 5 ? `<div class="text-center"><button class="ver-mais-mini bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-2 py-1 rounded text-xs" data-box="${boxId}">${labelBtn}</button></div>` : ""}
+    ${lista.length > 5 ? `<div class="text-center"><button class="ver-mais-mini bg-gray-200 hover:bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs" data-box="${boxId}">${labelBtn}</button></div>` : ""}
   </div>
   <div id="${boxId}-full" class="hidden">
     <div class="overflow-x-auto mb-2">
@@ -830,13 +803,13 @@ function renderAvisoComMiniTabela(titulo, tipo, lista, boxId, labelBtn) {
         </tbody>
       </table>
     </div>
-    <div class="text-center"><button class="ver-menos-mini bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-2 py-1 rounded text-xs" data-box="${boxId}">Ver menos</button></div>
+    <div class="text-center"><button class="ver-menos-mini bg-gray-200 hover:bg-gray-300 text-gray-800 px-2 py-1 rounded text-xs" data-box="${boxId}">Ver menos</button></div>
   </div>
   `;
   return html;
 }
 function mostrarDetalhesContrato(contrato) {
-  let html = `<table class="min-w-full text-left border border-indigo-100 text-xs">
+  let html = `<table class="min-w-full text-left border border-gray-200 text-xs">
     <tbody>
     ${Object.entries(contrato).filter(([k,v])=>v && v.toString().trim()).map(([k, v]) => {
       if (k === 'Final Vigência' || k === 'Início Vigência') {
@@ -905,6 +878,7 @@ function carregarContratosPlanilha() {
     download: true,
     header: true,
     skipEmptyLines: true,
+    worker: true,
     complete: function(results) {
       showLoading(false);
       if (!results.data || results.data.length === 0) {
@@ -968,36 +942,9 @@ document.addEventListener("DOMContentLoaded", function(){
   carregarContratosPlanilha();
 });
 
-// --- CHART.JS: CORRIGIDO PARA DESTRUIR ANTES DE REDESENHAR ---
+// --- CHART.JS: APENAS OS 2 GRÁFICOS ---
 function desenharGraficos() {
   Chart.register(ChartDataLabels);
-
-  // Gráfico Situação
-  const situacoes = {};
-  contratosFiltrados.forEach(c => {
-    const grupo = agruparSituacao(c['Situação']);
-    if (grupo) situacoes[grupo] = (situacoes[grupo] || 0) + 1;
-  });
-  const sitLabels = ["Vigente", "Não Vigente"];
-  const sitData = sitLabels.map(label => situacoes[label] || 0);
-  if (chartSituacao) chartSituacao.destroy();
-  chartSituacao = new Chart(document.getElementById('graficoSituacao'), {
-    type: 'pie',
-    data: {
-      labels: sitLabels,
-      datasets: [{
-        data: sitData,
-        backgroundColor: ['#6366f1', '#818cf8']
-      }]
-    },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { position: 'bottom' },
-        datalabels: { color: '#fff', font: { weight: 'bold' } }
-      }
-    }
-  });
 
   // Gráfico Ano
   const anos = {};
@@ -1014,7 +961,7 @@ function desenharGraficos() {
       datasets: [{
         label: 'Contratos',
         data: anoData,
-        backgroundColor: '#6366f1'
+        backgroundColor: '#334155'
       }]
     },
     options: {
@@ -1055,7 +1002,7 @@ function desenharGraficos() {
       labels: faixas.map(f => f.label),
       datasets: [{
         data: prazos,
-        backgroundColor: ['#6366f1', '#818cf8', '#60a5fa', '#fbbf24', '#0ea5e9']
+        backgroundColor: ['#334155', '#64748B', '#A3A3A3', '#FBBF24', '#38BDF8']
       }]
     },
     options: {
