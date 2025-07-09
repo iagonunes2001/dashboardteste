@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard de Análise de Contratos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <style>
+    #tabelaContratos tbody tr:hover,
+    .mini-table tbody tr:hover {
+      background-color: #E6ECEF !important;
+      cursor: pointer;
+    }
+    #modalDetalhes .modal-inner {
+      max-height: 70vh;
+      overflow-y: auto;
+      max-width: 500px;
+    }
+    #filtros select {
+      max-height: 180px;
+      overflow-y: auto;
+      min-width: 100px;
+    }
+    .hidden { display: none !important; }
+    .nav-btn.active { background: #1E4069; color: #FFFFFF; }
+    .nav-btn { background: #FFFFFF; color: #1E4069; border: 1px solid #1E4069; }
+    .nav-btn:hover { background: #4DA8DA; color: #FFFFFF; }
+    #buscaUniversal {
+      border: 1px solid #1E4069;
+      border-radius: 0.375rem;
+      padding: 0.5rem;
+      width: 100%;
+      max-width: 320px;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    #buscaUniversal:focus {
+      outline: none;
+      border-color: #4DA8DA;
+      box-shadow: 0 0 0 2px #4DA8DA44;
+    }
+    @media (max-width: 640px) {
+      #buscaUniversal { max-width: 100%; }
+    }
+    #loadingOverlay {
+      background: rgba(255,255,255,0.7);
+      position: fixed;
+      z-index: 1000;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .spinner {
+      border: 6px solid #E6ECEF;
+      border-top: 6px solid #1E4069;
+      border-radius: 50%;
+      width: 56px;
+      height: 56px;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% {transform: rotate(0deg);}
+      100% {transform: rotate(360deg);}
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col">
+  <div id="loadingOverlay" class="hidden">
+    <div>
+      <div class="spinner mx-auto"></div>
+      <div class="text-[#1E4069] text-lg mt-3 text-center font-bold">Carregando contratos...</div>
+    </div>
+  </div>
+  <header class="bg-[#1E4069] text-white p-4 shadow flex items-center justify-between">
+    <h1 class="text-2xl font-bold">Dashboard de Análise de Contratos</h1>
+    <div class="flex items-center gap-2">
+      <button id="navTabela" class="nav-btn rounded px-4 py-2 font-medium active" aria-current="page" type="button">Tabela</button>
+      <button id="navGraficos" class="nav-btn rounded px-4 py-2 font-medium" type="button">Gráficos</button>
+    </div>
+  </header>
+  <main class="flex-1 p-6">
+    <div id="painelTabela">
+      <div id="painelFiscaisCFISCON"></div>
+      <section id="avisosVencimento" class="mb-6"></section>
+      <section class="bg-white p-6 rounded shadow mb-6">
+        <div class="mb-4">
+          <label for="buscaUniversal" class="block text-sm font-semibold mb-1">Busca Universal</label>
+          <input type="text" id="buscaUniversal" placeholder="Digite nome, CNPJ, objeto, número do contrato ou qualquer termo...">
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4" id="filtros">
+          <div>
+            <label class="block text-sm font-semibold mb-1">Ano do Contrato</label>
+            <select id="filtroAnoContrato" class="w-full border rounded px-2 py-1"></select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-1">Final Vigência</label>
+            <select id="filtroFinalVigencia" class="w-full border rounded px-2 py-1">
+              <option value="">Todas</option>
+              <option value="30">Vencem em até 30 dias</option>
+              <option value="60">Vencem em até 60 dias</option>
+              <option value="90">Vencem em até 90 dias</option>
+              <option value="120">Vencem em até 120 dias</option>
+              <option value="150">Vencem em até 150 dias</option>
+              <option value="180">Vencem em até 180 dias</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-1">Tipo de Objeto</label>
+            <select id="filtroTipoObjeto" class="w-full border rounded px-2 py-1">
+              <option value="">Todos</option>
+              <option value="Compras">Compras</option>
+              <option value="Outros Serviços">Outros Serviços</option>
+              <option value="Obras e Serviços de Engenharia">Obras e Serviços de Engenharia</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-1">Fiscal(is)</label>
+            <select id="filtroFiscal" class="w-full border rounded px-2 py-1"></select>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold mb-1">Situação</label>
+            <select id="filtroSituacao" class="w-full border rounded px-2 py-1"></select>
+          </div>
+        </div>
+        <div class="mt-4">
+          <button id="limparFiltros" class="bg-[#E6ECEF] hover:bg-[#4DA8DA] text-[#333333] px-4 py-2 rounded">Limpar Filtros</button>
+        </div>
+      </section>
+      <section class="bg-white p-6 rounded shadow">
+        <h2 class="text-lg font-bold mb-4">Tabela de Contratos</h2>
+        <div class="overflow-x-auto">
+          <table id="tabelaContratos" class="display w-full"></table>
+        </div>
+      </section>
+    </div>
+    <div id="painelGraficos" class="hidden">
+      <section class="bg-white p-6 rounded shadow mb-6">
+        <h2 class="text-lg font-bold mb-4">Gráficos</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div>
+            <h3 class="font-semibold mb-2 text-sm text-gray-700">Situação dos Contratos</h3>
+            <canvas id="graficoSituacao"></canvas>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-2 text-sm text-gray-700">Contratos por Ano</h3>
+            <canvas id="graficoAno"></canvas>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-2 text-sm font-bold text-gray-700">Prazos dos Contratos</h3>
+            <canvas id="graficoPrazo"></canvas>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+  <div id="modalDetalhes" class="fixed inset-4 z-50 bg-black bg-opacity-50 flex items-center justify-center hidden" aria-modal="true" role="dialog">
+    <div class="bg-white rounded shadow-lg modal-inner p-6 relative">
+      <button id="fecharModal" class="absolute top-2 right-2 text-gray-400 hover:text-[#F4A261] text-2xl" title="Fechar" aria-label="Fechar"><span aria-hidden="true">×</span></button>
+      <h3 class="text-lg font-bold mb-4" id="modalTitulo"></h3>
+      <div id="modalConteudo" class="space-y-2 text-sm"></div>
+    </div>
+  </div>
+  <footer class="text-center text-gray-500 text-sm py-4">
+    ©️ 2025 Dashboard de Contratos - Exemplo Interativo
+  </footer>
+<script>
+  // --- VARIÁVEIS GLOBAIS ---
+  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTtD2VpTWhwtm2HZprgXlOmkrN5inOpaAHhxjHxkyOeRvszgsRnmiBgOImLhHr4_w/pub?output=csv";
+  let contratos = [];
+  let contratosFiltrados = [];
+  let tabela = null;
+  let chartSituacao = null, chartAno = null, chartPrazo = null;
+  let termoBuscaUniversal = "";
+
+  // --- FUNÇÕES AUXILIARES E FILTROS (idêntico ao seu dashboard) ---
+  function normSit(str) {
+    return (str || "")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[–—-]/g, "-")
+      .replace(/\s+/g, " ").trim().toLowerCase();
+  }
+  function agruparSituacao(sit) {
+    if (!sit) return "Não Vigente";
+    const norm = normSit(sit);
+    if (norm.includes("vigente")) {
+      return "Vigente";
+    }
+    return "Não Vigente";
+  }
+  function fillSelectOptionsSituacao(selectId, array) {
+    const select = document.getElementById(selectId);
+    const seen = new Set();
+    array.forEach(c => {
+      const grp = agruparSituacao(c['Situação']);
+      if (grp) seen.add(grp);
+    });
+    const values = ["Vigente", "Não Vigente"].filter(v => seen.has(v));
+    let options = `<option value="">Todas</option>`;
+    values.forEach(val => {
+      options += `<option value="${val}">${val}</option>`;
+    });
+    select.innerHTML = options;
+  }
+  function normalizeCol(str) {
+    return (str||'')
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[\r\n]+/g, " ")
+      .replace(/\s+/g, " ")
+      .replace(/^\s+|\s+$/g, "")
+      .replace(/[^a-zA-Z0-9 ]/g, "")
+      .toLowerCase();
+  }
+  function limparPrefixoNumero(texto) {
+    return (texto || '')
+      .replace(/^\s*\d+\s*[-–—]\s*/g, '')
+      .replace(/^\s*\d+\s+/g, '')
+      .trim();
+  }
+  const fiscaisCFISCON = [
+    "CARMEN LUCIA ULGUIM CHAGAS PADOIN",
+    "MARCIA BEHEREGARAY ARGOLLO MENDES",
+    "OTAVIO DA SILVA AFONSO",
+    "MAURICIO LEANDRO BORGES ROSA"
+  ];
+  function normalizarNomeFiscal(nome) {
+    return (nome || '')
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .toUpperCase().trim();
+  }
+  let cacheFiscais = new Map();
+  function getFiscaisCFISCONPresentes() {
+    if (cacheFiscais.size) return Array.from(cacheFiscais.keys());
+    contratos.forEach(contrato => {
+      (contrato['Fiscal(is)'] ?? "").split(/[,;\n]+/).forEach(fiscal => {
+        const nomeLimpo = limparPrefixoNumero(fiscal);
+        const norm = normalizarNomeFiscal(nomeLimpo);
+        if (fiscaisCFISCON.includes(norm)) cacheFiscais.set(norm, true);
+      });
+    });
+    return Array.from(cacheFiscais.keys());
+  }
+  function renderPainelFiscaisCFISCON() {
+    const fiscaisPresentes = getFiscaisCFISCONPresentes();
+    if (fiscaisPresentes.length === 0) {
+      document.getElementById('painelFiscaisCFISCON').innerHTML = '';
+      return;
+    }
+    fiscaisPresentes.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    let html = `<div class="mb-6 p-4 bg-[#E6ECEF] border-l-4 border-[#1E4069] rounded shadow">
+      <strong>Contratos C-FISCON:</strong>
+      <div class="flex flex-wrap gap-2 mt-2">`;
+    fiscaisPresentes.forEach((nome, idx) => {
+      html += `<button class="btn-fiscal-cfiscon bg-[#1E4069] hover:bg-[#4DA8DA] text-white px-3 py-1 rounded text-xs font-semibold" data-nome="${nome}">${nome}</button>`;
+    });
+    html += `</div>
+      <div id="cfiscon-contratos-lista" class="mt-4 hidden"></div>
+    </div>`;
+    document.getElementById('painelFiscaisCFISCON').innerHTML = html;
+    document.querySelectorAll('.btn-fiscal-cfiscon').forEach(btn => {
+      btn.onclick = function() {
+        const nome = this.getAttribute('data-nome');
+        mostrarContratosFiscalCFISCON(nome, this);
+      };
+    });
+  }
+  function mostrarContratosFiscalCFISCON(nomeFiscal, btn) {
+    const contratosDoFiscal = contratosFiltrados.filter(c => {
+      return (c['Fiscal(is)'] ?? '').split(/[,;\n]+/).some(f =>
+        normalizarNomeFiscal(limparPrefixoNumero(f)) === nomeFiscal
+      );
+    });
+    let html = `<div class="mb-2">
+      <span class="font-bold text-[#1E4069]">${nomeFiscal}</span>
+      <button class="ml-4 px-2 py-1 text-xs rounded bg-[#E6ECEF] hover:bg-[#4DA8DA] text-[#333333] close-cfiscon-contratos" title="Fechar">Fechar</button>
+    </div>`;
+    if (contratosDoFiscal.length === 0) {
+      html += `<div>Nenhum contrato encontrado para este fiscal nos filtros atuais.</div>`;
+    } else {
+      html += `<div class="overflow-x-auto">
+        <table class="min-w-full text-xs border rounded">
+          <thead class="bg-[#E6ECEF]">
+            <tr>
+              <th class="px-2 py-1">N° Contrato</th>
+              <th class="px-2 py-1">Ano</th>
+              <th class="px-2 py-1">Contratado</th>
+              <th class="px-2 py-1">Final Vigência</th>
+              <th class="px-2 py-1">Prazo</th>
+              <th class="px-2 py-1">Situação</th>
+              <th class="px-2 py-1"></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${contratosDoFiscal.map(c => {
+              let dias = diasAteVencimento(c['Final Vigência']);
+              let bgColor = '';
+              if (dias !== null && dias >= 0 && dias <= 30) {
+                bgColor = 'background-color:#F4A26133;';
+              } else if (dias !== null && dias > 30 && dias <= 60) {
+                bgColor = 'background-color:#00A65133;';
+              }
+              let cfisconStyle = contratoTemFiscalCFISCON(c) ? 'font-weight:bold;border-left:4px solid #1E4069;' : '';
+              return `
+              <tr style="${bgColor}${cfisconStyle}">
+                <td class="px-2 py-1">${c['N° Contrato'] || ''}</td>
+                <td class="px-2 py-1">${c['AnoContrato'] || ''}</td>
+                <td class="px-2 py-1">${c['Contratado'] || ''}</td>
+                <td class="px-2 py-1">${formatDateBR(c['Final Vigência']) || ''}</td>
+                <td class="px-2 py-1">${prazoMeses(c['Início Vigência'], c['Final Vigência'])}</td>
+                <td class="px-2 py-1">${c['Situação'] || ''}</td>
+                <td class="px-2 py-1 text-center">
+                  <button class="ver-detalhes-mini bg-[#1E4069] hover:bg-[#4DA8DA] text-white px-2 py-1 rounded text-xs" data-idx="${contratos.indexOf(c)}" title="Ver detalhes">Ver detalhes</button>
+                </td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+    }
+    const listaDiv = document.getElementById('cfiscon-contratos-lista');
+    listaDiv.innerHTML = html;
+    listaDiv.classList.remove('hidden');
+    listaDiv.querySelector('.close-cfiscon-contratos').onclick = () => {
+      listaDiv.classList.add('hidden');
+    };
+    listaDiv.querySelectorAll('.ver-detalhes-mini').forEach(btn => {
+      btn.onclick = function(evt) {
+        evt.stopPropagation();
+        let idx = this.getAttribute('data-idx');
+        mostrarDetalhesContrato(contratos[idx]);
+      };
+    });
+  }
+  function uniqueOptionsCaseInsensitive(array, field, limparNumero = false, multiSplit = false) {
+    const seen = new Map();
+    array.forEach(item => {
+      let valOri = (item[field] ?? '').toString().trim();
+      let vals = [valOri];
+      if (multiSplit) {
+        vals = valOri.split(/[,;\n]+/).map(x => x.trim()).filter(Boolean);
+      }
+      vals.forEach(v => {
+        if (limparNumero) v = limparPrefixoNumero(v);
+        const valNorm = v.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        if (valNorm && !seen.has(valNorm)) {
+          seen.set(valNorm, v);
+        }
+      });
+    });
+    return Array.from(seen.values()).filter(x => x !== '');
+  }
+  function fillSelectOptions(selectId, array, field, includeAll = true, limparNumero = false, multiSplit = false, destaqueCFISCON = false) {
+    const select = document.getElementById(selectId);
+    let values = uniqueOptionsCaseInsensitive(array, field, limparNumero, multiSplit);
+    if (destaqueCFISCON) {
+      let cfiscon = [], outros = [];
+      values.forEach(val => {
+        let norm = normalizarNomeFiscal(val);
+        if (fiscaisCFISCON.includes(norm)) {
+          cfiscon.push(val);
+        } else {
+          outros.push(val);
+        }
+      });
+      cfiscon.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      outros.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+      values = [...cfiscon, ...outros];
+    } else {
+      values.sort((a, b) => a.localeCompare(b, 'pt-BR'));
+    }
+    let options = includeAll ? `<option value="">Todos</option>` : '';
+    values.forEach(val => {
+      options += `<option value="${val}">${val}</option>`;
+    });
+    select.innerHTML = options;
+  }
+  const colunaMap = {
+    'instrumento': 'Instrumento',
+    'n contrato': 'N° Contrato',
+    'nº contrato': 'N° Contrato',
+    'ano contrato': 'AnoContrato',
+    'contratado': 'Contratado',
+    'cpfcnpj': 'CPF/CNPJ',
+    'descricao do objeto': 'Descrição do Objeto',
+    'valor contrato': 'ValorContrato',
+    'n ter aditivo apostilamento': 'Nº Ter. Aditivo Apostilamento',
+    'valor com alteracoes': 'Valor com Alterações',
+    'assinatura': 'Assinatura',
+    'inicio vigencia': 'Início Vigência',
+    'final vigencia': 'Final Vigência',
+    'situacao': 'Situação',
+    'n processo': 'N° Processo',
+    'ano processo': 'Ano Processo',
+    'gestores': 'Gestor(es)',
+    'natureza objeto': 'Natureza Objeto',
+    'objeto': 'Objeto',
+    'suplentes': 'Suplente(s)',
+    'fiscais': 'Fiscal(is)',
+    'prazo': 'Prazo',
+    'prazo maximo vigencia': 'Prazo Máximo Vigência',
+    'prorrogacao prazo': 'Prorrogação Prazo',
+    'lei': 'Lei',
+    'obs': 'OBS:'
+  };
+  function mapearTipoObjeto(objeto) {
+    if (!objeto) return "Outros Serviços";
+    const objetoNorm = objeto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    if (objetoNorm.includes("fornecimento") || objetoNorm.includes("material") || objetoNorm.includes("compra")) {
+      return "Compras";
+    }
+    if (objetoNorm.includes("obra") || objetoNorm.includes("engenharia") || objetoNorm.includes("manutenção") || objetoNorm.includes("construção")) {
+      return "Obras e Serviços de Engenharia";
+    }
+    if (objetoNorm.includes("serviço") || objetoNorm.includes("locação") || objetoNorm.includes("alienação") || objetoNorm.includes("limpeza")) {
+      return "Outros Serviços";
+    }
+    return "Outros Serviços";
+  }
+  function excelSerialToDate(serial) {
+    var utc_days = Math.floor(serial - 25569);
+    var utc_value = utc_days * 86400;
+    var date_info = new Date(utc_value * 1000);
+    date_info.setHours(0, 0, 0, 0);
+    return date_info;
+  }
+  function parseDate(dateStr) {
+    if (!dateStr) return null;
+    if (typeof dateStr === 'number' || (!isNaN(dateStr) && String(dateStr).length >= 5 && String(dateStr).length <= 6)) {
+      return excelSerialToDate(Number(dateStr));
+    }
+    if (/^\d{2}\/\d{2}\/\d{2}$/.test(dateStr)) {
+      const [d, m, y] = dateStr.split('/');
+      const ano = Number(y) < 50 ? '20' + y : '19' + y;
+      return new Date(`${ano}-${m}-${d}T00:00:00`);
+    }
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+      const [d, m, y] = dateStr.split('/');
+      return new Date(`${y}-${m}-${d}T00:00:00`);
+    }
+    if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) {
+      return new Date(dateStr);
+    }
+    let d = new Date(dateStr);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  function formatDateBR(dateStr) {
+    const d = parseDate(dateStr);
+    if (!d) return "";
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
+  }
+  function prazoMeses(inicio, fim) {
+    const d1 = parseDate(inicio);
+    const d2 = parseDate(fim);
+    if (!d1 || !d2) return "";
+    let months =
+      (d2.getFullYear() - d1.getFullYear()) * 12 +
+      (d2.getMonth() - d1.getMonth());
+    if (d2.getDate() >= d1.getDate()) {
+      months++;
+    }
+    return months > 0 ? `${months} mês${months > 1 ? 'es' : ''}` : "";
+  }
+  function diasAteVencimento(finalVigencia) {
+    let dataFinal = parseDate(finalVigencia);
+    if (!dataFinal) return null;
+    let hoje = new Date();
+    hoje.setHours(0,0,0,0);
+    return Math.ceil((dataFinal - hoje) / (1000 * 60 * 60 * 24));
+  }
+  function atualizarFiltros() {
+    fillSelectOptions('filtroAnoContrato', contratos, 'AnoContrato');
+    fillSelectOptions('filtroFiscal', contratos, 'Fiscal(is)', true, true, true, true);
+    fillSelectOptionsSituacao('filtroSituacao', contratos);
+    renderPainelFiscaisCFISCON();
+  }
+  function filtroUniversalContrato(contrato, termo) {
+    if (!termo) return true;
+    termo = termo.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    for (const [chave, valor] of Object.entries(contrato)) {
+      if (valor && typeof valor === "string") {
+        let valNorm = valor.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        if (valNorm.includes(termo)) return true;
+      } else if (typeof valor === "number" && valor.toString().includes(termo)) {
+        return true;
+      }
+    }
+    return false;
+  }
+  function aplicarFiltros() {
+    const ano = document.getElementById('filtroAnoContrato').value;
+    const vig = document.getElementById('filtroFinalVigencia').value;
+    const tipoObjeto = document.getElementById('filtroTipoObjeto').value;
+    const fiscal = document.getElementById('filtroFiscal').value;
+    const situacao = document.getElementById('filtroSituacao').value;
+    contratosFiltrados = contratos.filter(c => {
+      let match = true;
+      if (termoBuscaUniversal && !filtroUniversalContrato(c, termoBuscaUniversal)) {
+        return false;
+      }
+      if (ano && String(c['AnoContrato'] ?? '').trim().toLowerCase() !== String(ano).trim().toLowerCase()) match = false;
+      if (tipoObjeto) {
+        const tipoContrato = mapearTipoObjeto(c['Objeto']);
+        if (tipoContrato !== tipoObjeto) match = false;
+      }
+      if (fiscal) {
+        let fiscaisArr = (c['Fiscal(is)'] ?? '').split(/[,;\n]+/)
+          .map(f => limparPrefixoNumero(f).toLowerCase().trim())
+          .filter(Boolean);
+        if (!fiscaisArr.includes(fiscal.toLowerCase())) match = false;
+      }
+      if (situacao && agruparSituacao(c['Situação']) !== situacao) match = false;
+      if (vig) {
+        let dias = diasAteVencimento(c['Final Vigência']);
+        if (dias === null || dias < 0 || dias > Number(vig)) match = false;
+      }
+      return match;
+    });
+    atualizarTabela();
+    atualizarAvisosVencimento();
+    renderPainelFiscaisCFISCON();
+    desenharGraficos();
+  }
+  function contratoTemFiscalCFISCON(contrato) {
+    return (contrato['Fiscal(is)'] ?? '').split(/[,;\n]+/).some(f => {
+      const nome = limparPrefixoNumero(f);
+      return fiscaisCFISCON.includes(normalizarNomeFiscal(nome));
+    });
+  }
+  function atualizarTabela() {
+    const columns = [
+      { title: "N° Contrato", data: "N° Contrato" },
+      { 
+        title: "Ano do Contrato", 
+        data: "AnoContrato",
+        type: "num"
+      },
+      { title: "Contratado", data: "Contratado" },
+      { 
+        title: "Final Vigência", 
+        data: "Final Vigência",
+        render: function(data, type, row) {
+          if (type === "sort" || type === "type") {
+            const d = parseDate(data);
+            return d ? d.getTime() : 0;
+          }
+          return formatDateBR(data);
+        }
+      },
+      { 
+        title: "Prazo", 
+        data: null,
+        render: function(data, type, row) {
+          if (type === "sort" || type === "type") {
+            const d1 = parseDate(row["Início Vigência"]);
+            const d2 = parseDate(row["Final Vigência"]);
+            if (!d1 || !d2) return 0;
+            let months =
+              (d2.getFullYear() - d1.getFullYear()) * 12 +
+              (d2.getMonth() - d1.getMonth());
+            if (d2.getDate() >= d1.getDate()) months++;
+            return months;
+          }
+          return prazoMeses(row["Início Vigência"], row["Final Vigência"]);
+        }
+      },
+      { title: "Situação", data: "Situação", type: "string" },
+      { 
+        title: "",
+        data: null,
+        orderable: false,
+        render: function(data, type, row, meta) {
+          return `<button class="ver-detalhes bg-[#1E4069] hover:bg-[#4DA8DA] text-white px-2 py-1 rounded text-xs" data-idx="${contratos.indexOf(row)}" title="Ver detalhes">Ver detalhes</button>`;
+        }
+      }
+    ];
+    let ordenados = [...contratosFiltrados].sort((a, b) => {
+      let aCF = contratoTemFiscalCFISCON(a) ? 0 : 1;
+      let bCF = contratoTemFiscalCFISCON(b) ? 0 : 1;
+      if (aCF !== bCF) return aCF - bCF;
+      return (a['Contratado'] || '').localeCompare((b['Contratado'] || ''), 'pt-BR');
+    });
+    if (tabela) {
+      tabela.clear().destroy();
+      $('#tabelaContratos').empty();
+    }
+    tabela = $('#tabelaContratos').DataTable({
+      data: ordenados,
+      columns: columns,
+      pageLength: 10,
+      lengthMenu: [10, 50, 100, 200, 500],
+      language: {
+        url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json"
+      },
+      createdRow: function(row, data) {
+        let dias = diasAteVencimento(data['Final Vigência']);
+        if (dias !== null && dias >= 0 && dias <= 30) {
+          $(row).css('background-color', '#F4A26133');
+        } else if (dias !== null && dias > 30 && dias <= 60) {
+          $(row).css('background-color', '#00A65133');
+        }
+        if (contratoTemFiscalCFISCON(data)) {
+          $(row).css('font-weight', 'bold');
+          $(row).css('border-left', '4px solid #1E4069');
+        }
+      }
+    });
+    $('#tabelaContratos tbody').off('click').on('click', '.ver-detalhes', function (evt) {
+      evt.stopPropagation();
+      let idx = $(this).data('idx');
+      mostrarDetalhesContrato(contratos[idx]);
+    });
+    $('#avisosVencimento').off('click').on('click', '.ver-detalhes-mini', function(evt){
+      evt.stopPropagation();
+      let idx = $(this).data('idx');
+      mostrarDetalhesContrato(contratos[idx]);
+    });
+  }
+  function atualizarAvisosVencimento() {
+    let html = '';
+    const vencendo30 = contratosFiltrados.filter(c => {
+      let dias = diasAteVencimento(c['Final Vigência']);
+      return dias !== null && dias >= 0 && dias <= 30;
+    });
+    const vencendo60 = contratosFiltrados.filter(c => {
+      let dias = diasAteVencimento(c['Final Vigência']);
+      return dias !== null && dias > 30 && dias <= 60;
+    });
+    html += renderAvisoComMiniTabela(
+      "Atenção", 
+      "orange", 
+      vencendo30, 
+      "contratos-ate30", 
+      "Ver mais contratos vencendo em até 30 dias"
+    );
+    html += renderAvisoComMiniTabela(
+      "Alerta", 
+      "green", 
+      vencendo60, 
+      "contratos-ate60", 
+      "Ver mais contratos vencendo em até 60 dias"
+    );
+    document.getElementById('avisosVencimento').innerHTML = html;
+    document.querySelectorAll('.ver-mais-mini').forEach(btn => {
+      btn.onclick = function() {
+        const boxId = this.getAttribute('data-box');
+        document.getElementById(boxId + "-mini").classList.add("hidden");
+        document.getElementById(boxId + "-full").classList.remove("hidden");
+      };
+    });
+    document.querySelectorAll('.ver-menos-mini').forEach(btn => {
+      btn.onclick = function() {
+        const boxId = this.getAttribute('data-box');
+        document.getElementById(boxId + "-mini").classList.remove("hidden");
+        document.getElementById(boxId + "-full").classList.add("hidden");
+      };
+    });
+  }
+  function renderAvisoComMiniTabela(titulo, cor, lista, boxId, labelBtn) {
+    if (!lista.length) return '';
+    let corAviso = cor === 'orange' ? 'bg-[#F4A261]/10 border-[#F4A261] text-[#333333]' : 'bg-[#00A651]/10 border-[#00A651] text-[#333333]';
+    let corHead = cor === 'orange' ? 'bg-[#F4A261]/20' : 'bg-[#00A651]/20';
+    let ordenados = [...lista].sort((a, b) => {
+      let aCF = contratoTemFiscalCFISCON(a) ? 0 : 1;
+      let bCF = contratoTemFiscalCFISCON(b) ? 0 : 1;
+      if (aCF !== bCF) return aCF - bCF;
+      return (a['Contratado'] || '').localeCompare((b['Contratado'] || ''), 'pt-BR');
+    });
+    let html = `
+    <div class="p-4 mb-2 ${corAviso} border-l-4 rounded">
+      <strong>${titulo}:</strong> ${lista.length} contrato(s) vencendo em até <b>${cor === 'orange' ? '30' : '60'} dias</b>!
+    </div>
+    <div id="${boxId}-mini">
+      <div class="overflow-x-auto mb-2">
+        <table class="mini-table min-w-full text-xs border rounded">
+          <thead>
+            <tr class="${corHead}">
+              <th class="px-2 py-1">N° Contrato</th>
+              <th class="px-2 py-1">Ano</th>
+              <th class="px-2 py-1">Contratado</th>
+              <th class="px-2 py-1">Final Vigência</th>
+              <th class="px-2 py-1">Prazo</th>
+              <th class="px-2 py-1">Situação</th>
+              <th class="px-2 py-1"> </th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ordenados.slice(0,5).map((c, idx) => `
+              <tr${contratoTemFiscalCFISCON(c) ? ' style="font-weight:bold;border-left:4px solid #1E4069"' : ''}>
+                <td class="px-2 py-1">${c['N° Contrato'] || ''}</td>
+                <td class="px-2 py-1">${c['AnoContrato'] || ''}</td>
+                <td class="px-2 py-1">${c['Contratado'] || ''}</td>
+                <td class="px-2 py-1">${formatDateBR(c['Final Vigência']) || ''}</td>
+                <td class="px-2 py-1">${prazoMeses(c['Início Vigência'], c['Final Vigência'])}</td>
+                <td class="px-2 py-1">${c['Situação'] || ''}</td>
+                <td class="px-2 py-1 text-center">
+                  <button class="ver-detalhes-mini bg-[#1E4069] hover:bg-[#4DA8DA] text-white px-2 py-1 rounded text-xs" data-idx="${contratos.indexOf(c)}" title="Ver detalhes">Ver detalhes</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      ${lista.length > 5 ? `<div class="text-center"><button class="ver-mais-mini bg-[#E6ECEF] hover:bg-[#4DA8DA] text-[#333333] px-2 py-1 rounded text-xs" data-box="${boxId}">${labelBtn}</button></div>` : ""}
+    </div>
+    <div id="${boxId}-full" class="hidden">
+      <div class="overflow-x-auto mb-2">
+        <table class="mini-table min-w-full text-xs border rounded">
+          <thead>
+            <tr class="${corHead}">
+              <th class="px-2 py-1">N° Contrato</th>
+              <th class="px-2 py-1">Ano</th>
+              <th class="px-2 py-1">Contratado</th>
+              <th class="px-2 py-1">Final Vigência</th>
+              <th class="px-2 py-1">Prazo</th>
+              <th class="px-2 py-1">Situação</th>
+              <th class="px-2 py-1"> </th>
+            </tr>
+          </thead>
+          <tbody>
+            ${ordenados.map((c, idx) => `
+              <tr${contratoTemFiscalCFISCON(c) ? ' style="font-weight:bold;border-left:4px solid #1E4069"' : ''}>
+                <td class="px-2 py-1">${c['N° Contrato'] || ''}</td>
+                <td class="px-2 py-1">${c['AnoContrato'] || ''}</td>
+                <td class="px-2 py-1">${c['Contratado'] || ''}</td>
+                <td class="px-2 py-1">${formatDateBR(c['Final Vigência']) || ''}</td>
+                <td class="px-2 py-1">${prazoMeses(c['Início Vigência'], c['Final Vigência'])}</td>
+                <td class="px-2 py-1">${c['Situação'] || ''}</td>
+                <td class="px-2 py-1 text-center">
+                  <button class="ver-detalhes-mini bg-[#1E4069] hover:bg-[#4DA8DA] text-white px-2 py-1 rounded text-xs" data-idx="${contratos.indexOf(c)}" title="Ver detalhes">Ver detalhes</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div class="text-center"><button class="ver-menos-mini bg-[#E6ECEF] hover:bg-[#4DA8DA] text-[#333333] px-2 py-1 rounded text-xs" data-box="${boxId}">Ver menos</button></div>
+    </div>
+    `;
+    return html;
+  }
+  function mostrarDetalhesContrato(contrato) {
+    let html = `<table class="min-w-full text-left border border-[#E6ECEF] text-xs">
+      <tbody>
+      ${Object.entries(contrato).map(([k, v]) => {
+        if (k === 'Final Vigência' || k === 'Início Vigência') {
+          return `<tr class="border-b border-[#E6ECEF]">
+            <th class="py-1 px-2 bg-[#E6ECEF] font-semibold w-40">${k}</th>
+            <td class="py-1 px-2">${formatDateBR(v)}</td>
+          </tr>`;
+        }
+        return `<tr class="border-b border-[#E6ECEF]">
+          <th class="py-1 px-2 bg-[#E6ECEF] font-semibold w-40">${k}</th>
+          <td class="py-1 px-2">${v}</td>
+        </tr>`;
+      }).join('')}
+      <tr>
+          <th class="py-1 px-2 bg-[#E6ECEF] font-semibold w-40">Prazo (automático)</th>
+          <td class="py-1 px-2">${prazoMeses(contrato['Início Vigência'], contrato['Final Vigência'])}</td>
+      </tr>
+      </tbody>
+    </table>`;
+    document.getElementById('modalTitulo').innerText = `Detalhes do Contrato: ${contrato['N° Contrato'] || contrato['N° Processo'] || ''}`;
+    document.getElementById('modalConteudo').innerHTML = html;
+    document.getElementById('modalDetalhes').classList.remove('hidden');
+  }
+  function validateData(data) {
+    if (!data || data.length === 0) {
+      alert('Arquivo vazio ou inválido.');
+      return false;
+    }
+    const requiredCols = ['N° Contrato', 'Final Vigência'];
+    const firstRow = data[0];
+    const missing = requiredCols.filter(col => !Object.keys(firstRow).includes(col));
+    if (missing.length) {
+      alert(`Colunas obrigatórias ausentes: ${missing.join(', ')}`);
+      return false;
+    }
+    return true;
+  }
+  function processData(data) {
+    contratos = data.map(row => {
+      let obj = {};
+      Object.keys(row).forEach(k => {
+        let norm = normalizeCol(k);
+        let key = colunaMap[norm] || k.trim();
+        if (key === "AnoContrato" && row[k]) {
+          obj[key] = Number(row[k]);
+        } else {
+          obj[key] = typeof row[k] === 'string' ? row[k].trim() : row[k];
+        }
+      });
+      return obj;
+    });
+    contratosFiltrados = [...contratos];
+    cacheFiscais = new Map();
+    atualizarFiltros();
+    aplicarFiltros();
+    desenharGraficos();
+  }
+
+  // --- INTEGRAÇÃO: LOADING E GOOGLE SHEETS CSV ---
+  function showLoading(show = true) {
+    document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
+  }
+  function carregarContratosPlanilha() {
+    showLoading(true);
+    Papa.parse(SHEET_CSV_URL, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: function(results) {
+        showLoading(false);
+        if (!results.data || results.data.length === 0) {
+          alert('Não foi possível carregar dados da planilha.');
+          return;
+        }
+        processData(results.data);
+        desenharGraficos();
+      },
+      error: function(err) {
+        showLoading(false);
+        alert('Erro ao carregar dados da planilha!');
+        console.error(err);
+      }
+    });
+  }
+
+  // --- EVENTOS DE INTERFACE ---
+  document.addEventListener("DOMContentLoaded", function(){
+    document.getElementById('buscaUniversal').addEventListener('input', function() {
+      termoBuscaUniversal = this.value.trim();
+      aplicarFiltros();
+    });
+    ['filtroAnoContrato','filtroFinalVigencia','filtroTipoObjeto','filtroFiscal','filtroSituacao']
+      .forEach(id => {
+        if (document.getElementById(id))
+          document.getElementById(id).addEventListener('change', aplicarFiltros);
+      });
+    document.getElementById('limparFiltros').addEventListener('click', () => {
+      ['filtroAnoContrato', 'filtroFinalVigencia', 'filtroTipoObjeto', 'filtroFiscal', 'filtroSituacao']
+        .forEach(id => document.getElementById(id).value = '');
+      termoBuscaUniversal = "";
+      document.getElementById('buscaUniversal').value = "";
+      aplicarFiltros();
+    });
+    document.getElementById('navTabela').addEventListener('click', function(){
+      document.getElementById('painelTabela').classList.remove('hidden');
+      document.getElementById('painelGraficos').classList.add('hidden');
+      this.classList.add('active');
+      this.setAttribute('aria-current', "page");
+      document.getElementById('navGraficos').classList.remove('active');
+      document.getElementById('navGraficos').removeAttribute('aria-current');
+    });
+    document.getElementById('navGraficos').addEventListener('click', function(){
+      document.getElementById('painelTabela').classList.add('hidden');
+      document.getElementById('painelGraficos').classList.remove('hidden');
+      this.classList.add('active');
+      this.setAttribute('aria-current', "page");
+      document.getElementById('navTabela').classList.remove('active');
+      document.getElementById('navTabela').removeAttribute('aria-current');
+      desenharGraficos();
+    });
+    document.getElementById('fecharModal').onclick = () => {
+      document.getElementById('modalDetalhes').classList.add('hidden');
+    };
+    document.getElementById('modalDetalhes').onclick = e => {
+      if (e.target === document.getElementById('modalDetalhes')) {
+        document.getElementById('modalDetalhes').classList.add('hidden');
+      }
+    };
+    carregarContratosPlanilha();
+  });
+
+  // --- CHART.JS: CORRIGIDO PARA DESTRUIR ANTES DE REDESENHAR ---
+  function desenharGraficos() {
+    Chart.register(ChartDataLabels);
+
+    // Gráfico Situação
+    const situacoes = {};
+    contratosFiltrados.forEach(c => {
+      const grupo = agruparSituacao(c['Situação']);
+      if (grupo) situacoes[grupo] = (situacoes[grupo] || 0) + 1;
+    });
+    const sitLabels = ["Vigente", "Não Vigente"];
+    const sitData = sitLabels.map(label => situacoes[label] || 0);
+    if (chartSituacao) chartSituacao.destroy();
+    chartSituacao = new Chart(document.getElementById('graficoSituacao'), {
+      type: 'pie',
+      data: {
+        labels: sitLabels,
+        datasets: [{
+          data: sitData,
+          backgroundColor: ['#1E4069', '#4DA8DA']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' },
+          datalabels: { color: '#fff', font: { weight: 'bold' } }
+        }
+      }
+    });
+
+    // Gráfico Ano
+    const anos = {};
+    contratosFiltrados.forEach(c => {
+      if (c['AnoContrato']) anos[c['AnoContrato']] = (anos[c['AnoContrato']] || 0) + 1;
+    });
+    const anoLabels = Object.keys(anos).sort();
+    const anoData = anoLabels.map(a => anos[a]);
+    if (chartAno) chartAno.destroy();
+    chartAno = new Chart(document.getElementById('graficoAno'), {
+      type: 'bar',
+      data: {
+        labels: anoLabels,
+        datasets: [{
+          label: 'Contratos',
+          data: anoData,
+          backgroundColor: '#1E4069'
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          datalabels: { color: '#fff', font: { weight: 'bold' } }
+        }
+      }
+    });
+
+    // Gráfico Prazo
+    const faixas = [
+      { label: 'Até 6 meses', min: 0, max: 6 },
+      { label: '7 a 12 meses', min: 7, max: 12 },
+      { label: '13 a 24 meses', min: 13, max: 24 },
+      { label: '25 a 36 meses', min: 25, max: 36 },
+      { label: 'Acima de 36 meses', min: 37, max: 999 }
+    ];
+    const prazos = [0, 0, 0, 0, 0];
+    contratosFiltrados.forEach(c => {
+      const d1 = parseDate(c['Início Vigência']);
+      const d2 = parseDate(c['Final Vigência']);
+      if (!d1 || !d2) return;
+      let months = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+      if (d2.getDate() >= d1.getDate()) months++;
+      for (let i = 0; i < faixas.length; i++) {
+        if (months >= faixas[i].min && months <= faixas[i].max) {
+          prazos[i]++;
+          break;
+        }
+      }
+    });
+    if (chartPrazo) chartPrazo.destroy();
+    chartPrazo = new Chart(document.getElementById('graficoPrazo'), {
+      type: 'doughnut',
+      data: {
+        labels: faixas.map(f => f.label),
+        datasets: [{
+          data: prazos,
+          backgroundColor: ['#1E4069', '#4DA8DA', '#00A651', '#F4A261', '#0078A8']
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' },
+          datalabels: { color: '#fff', font: { weight: 'bold' } }
+        }
+      }
+    });
+  }
+</script>
+</body>
+</html>
