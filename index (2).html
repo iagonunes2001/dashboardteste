@@ -1,0 +1,430 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Interativo de Contratos</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css">
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    th, td { white-space: nowrap; }
+    .custom-shadow { box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05); }
+    .hover-scale { transition: transform 0.2s; }
+    .hover-scale:hover { transform: scale(1.02); }
+    #detailsModal { display: none; }
+    #detailsModal.show { display: block; }
+  </style>
+</head>
+<body class="bg-gray-100 text-gray-900">
+  <div class="max-w-7xl mx-auto p-6">
+    <h1 class="text-4xl font-extrabold text-center mb-4 text-indigo-600">Dashboard de Contratos</h1>
+    <p class="text-center mb-8 text-md text-gray-500">Carregue um arquivo CSV para visualizar e filtrar contratos de forma interativa.</p>
+    
+    <!-- Upload -->
+    <div class="mb-6 bg-white p-6 rounded-xl custom-shadow">
+      <label class="font-semibold text-gray-700">Carregar CSV:</label>
+      <input type="file" id="csvFile" accept=".csv" class="block border border-gray-300 p-3 rounded-lg w-full mt-2 bg-gray-50 hover:bg-gray-100 transition">
+    </div>
+    
+    <!-- Filtros -->
+    <div class="grid md:grid-cols-3 gap-4 mb-8">
+      <div>
+        <label class="font-semibold text-gray-700">Ano:</label>
+        <select id="yearFilter" class="w-full border border-gray-300 p-3 rounded-lg mt-1 bg-white focus:ring-2 focus:ring-indigo-500">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div>
+        <label class="font-semibold text-gray-700">Contratado:</label>
+        <select id="contratadoFilter" class="w-full border border-gray-300 p-3 rounded-lg mt-1 bg-white focus:ring-2 focus:ring-indigo-500">
+          <option value="">Todos</option>
+        </select>
+        </select>
+      </div>
+      <div>
+        <label class="font-semibold text-gray-700">Descrição:</label>
+        <select id="descFilter" class="w-full border border-gray-300 p-3 rounded-lg mt-1 bg-white focus:ring-2 focus:ring-indigo-500">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div>
+        <label class="font-semibold text-gray-700">Objeto:</label>
+        <select id="objetoFilter" class="w-full border border-gray-300 p-3 rounded-lg mt-1 bg-white focus:ring-2 focus:ring-indigo-500">
+          <option value="">Todos</option>
+        </select>
+      </div>
+      <div>
+        <label class="font-semibold text-gray-700">Situação:</label>
+        <select id="statusFilter" class="w-full border border-gray-300 p-3 rounded-lg mt-1 bg-white focus:ring-2 focus:ring-indigo-500">
+          <option value="">Todos</option>
+          <option value="Vigente">Vigente</option>
+          <option value="Expirado">Expirado</option>
+          <option value="Aguardando OIS">Aguardando OIS</option>
+          <option value="Encerrado">Encerrado</option>
+          <option value="Rescindido">Rescindido</option>
+          <option value="Anulado">Anulado</option>
+        </select>
+      </div>
+      <div>
+        <label class="font-semibold text-gray-700">Fiscal:</label>
+        <select id="fiscalFilter" class="w-full border border-gray-300 p-3 rounded-lg mt-1 bg-white focus:ring-2 focus:ring-indigo-500">
+          <option value="">Todos</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="mb-8 flex items-center gap-4">
+      <div>
+        <label class="font-semibold text-gray-700">Contratos vencendo em (dias):</label>
+        <select id="daysFilter" class="border border-gray-300 p-3 rounded-lg ml-2 bg-white focus:ring-2 focus:ring-indigo-500">
+          <option value="30">30</option>
+          <option value="60">60</option>
+          <option value="90">90</option>
+          <option value="120">120</option>
+          <option value="150">150</option>
+          <option value="180">180</option>
+        </select>
+      </div>
+      <button id="clearFilters" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Limpar filtros</button>
+    </div>
+    
+    <div id="expiringAlert" class="hidden bg-amber-50 border-l-4 border-amber-500 p-6 mb-8 rounded-xl custom-shadow">
+      <p class="font-bold text-amber-800">Contratos Próximos ao Vencimento:</p>
+      <ul id="expiringList" class="list-disc pl-6 text-amber-800"></ul>
+    </div>
+
+    <div class="bg-white p-6 rounded-xl custom-shadow mb-8 hover-scale">
+      <h2 class="text-2xl font-semibold mb-4 text-gray-800">Lista de Contratos</h2>
+      <table id="contractsTable" class="display nowrap" style="width:100%">
+        <thead><tr id="tableHead"></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Modal para detalhes -->
+    <div id="detailsModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+      <div class="bg-white rounded-xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto custom-shadow">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-800">Detalhes do Contrato</h2>
+        <div id="detailsContent" class="text-gray-700"></div>
+        <button id="closeModal" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">Fechar</button>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="bg-white p-6 rounded-xl custom-shadow hover-scale">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-800">Contratos por Ano</h2>
+        <canvas id="yearChart"></canvas>
+      </div>
+      <div class="bg-white p-6 rounded-xl custom-shadow hover-scale">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-800">Distribuição por Situação</h2>
+        <canvas id="statusChart"></canvas>
+      </div>
+      <div class="bg-white p-6 rounded-xl custom-shadow hover-scale md:col-span-2">
+        <h2 class="text-2xl font-semibold mb-4 text-gray-800">Vencimentos nos Próximos 6 Meses</h2>
+        <canvas id="expiryChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const today = new Date();
+    let contractsData = [];
+    let table;
+    let yearChart;
+    let statusChart;
+    let expiryChart;
+
+    function normalizeHeader(header) {
+      return header.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^a-zA-Z0-9]/g, "");
+    }
+
+    function normalizeData(row) {
+      const newObj = {};
+      Object.keys(row).forEach(key => {
+        newObj[normalizeHeader(key)] = row[key];
+      });
+      return newObj;
+    }
+
+    document.getElementById('csvFile').addEventListener('change', function(e) {
+      Papa.parse(e.target.files[0], {
+        header: true,
+        complete: function(results) {
+          contractsData = results.data.map(normalizeData);
+          renderTable();
+        }
+      });
+    });
+
+    function renderTable() {
+      const mainColumns = ['NContrato', 'AnoContrato', 'Contratado', 'Situacao', 'FinalVigencia'];
+      const headers = mainColumns.concat(['Acoes']);
+      $('#tableHead').html(headers.map(h => `<th>${h === 'Acoes' ? 'Ações' : h}</th>`).join(""));
+      if ($.fn.DataTable.isDataTable('#contractsTable')) {
+       $('#contractsTable').DataTable().destroy();
+      }
+      table = $('#contractsTable').DataTable({
+        data: contractsData,
+        columns: mainColumns.map(h => ({ data: h })).concat([{
+          data: null,
+          render: () => '<button class="details-btn px-2 py-1 bg-indigo-600 text-white rounded hover:bg-indigo-700 text-sm">Ver Detalhes</button>'
+        }]),
+        pageLength: 10,
+        dom: 'Bfrtip',
+        buttons: ['excelHtml5', 'pdfHtml5'],
+        language: { url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json" }
+      });
+
+      // Evento para o botão de detalhes
+      $('#contractsTable').on('click', '.details-btn', function() {
+        const data = table.row($(this).parents('tr')).data();
+        const content = Object.entries(data).map(([key, value]) => `<p><strong>${key}:</strong> ${value || 'N/A'}</p>`).join('');
+        $('#detailsContent').html(content);
+        $('#detailsModal').addClass('show');
+      });
+
+      // Fechar modal
+      $('#closeModal').on('click', () => $('#detailsModal').removeClass('show'));
+
+      fillFilters();
+      updateCharts();
+      updateAlert();
+    }
+
+    function fillFilters() {
+      fillUnique("#yearFilter", "AnoContrato");
+      fillUnique("#contratadoFilter", "Contratado");
+      fillUnique("#descFilter", "DescricaodoObjeto");
+      fillUnique("#objetoFilter", "Objeto");
+      fillUnique("#fiscalFilter", "Fiscalis");
+    }
+
+    function fillUnique(selector, key) {
+      const select = $(selector);
+      select.find("option:not(:first)").remove();
+      [...new Set(contractsData.map(c => c[key]).filter(Boolean))].sort().forEach(value => {
+        select.append(`<option value="${value}">${value}</option>`);
+      });
+    }
+
+    $("#yearFilter, #contratadoFilter, #descFilter, #objetoFilter, #statusFilter, #fiscalFilter, #daysFilter").on("change", function() {
+      table.draw();
+      updateAlert();
+      updateCharts();
+    });
+
+    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+      const getVal = id => $(id).val();
+      const matches = (id, i) => !getVal(id) || data[i] === getVal(id);
+      return matches('#yearFilter', 1) &&
+             matches('#contratadoFilter', 2) &&
+             matches('#descFilter', 3) &&
+             matches('#objetoFilter', 4) &&
+             matches('#statusFilter', 3) &&
+             matches('#fiscalFilter', 5);
+    });
+
+    function updateAlert() {
+      const days = parseInt($('#daysFilter').val()) || 30;
+      const rows = table.rows({ filter: 'applied' }).data().toArray();
+      const upcoming = rows.filter(c => {
+        const d = new Date(c["FinalVigencia"]);
+        const daysDiff = (d - today) / (1000 * 60 * 60 * 24);
+        return c["Situacao"] === "Vigente" && daysDiff >= 0 && daysDiff <= days;
+      });
+      const list = $('#expiringList');
+      list.empty();
+      upcoming.forEach(c => {
+        list.append(`<li>Contrato ${c["NContrato"]} (vence em ${new Date(c["FinalVigencia"]).toLocaleDateString("pt-BR")})</li>`);
+      });
+      $('#expiringAlert').toggleClass('hidden', upcoming.length === 0);
+    }
+
+    function updateCharts() {
+      updateYearChart();
+      updateStatusChart();
+      updateExpiryChart();
+    }
+
+    function updateYearChart() {
+      const counts = {};
+      table.rows({ filter: 'applied' }).data().toArray().forEach(c => {
+        const ano = c["AnoContrato"] || "Sem Ano";
+        counts[ano] = (counts[ano] || 0) + 1;
+      });
+      const ctx = document.getElementById("yearChart");
+      if (yearChart) yearChart.destroy();
+      yearChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: Object.keys(counts),
+          datasets: [{
+            label: 'Contratos',
+            data: Object.values(counts),
+            backgroundColor: 'rgba(79, 70, 229, 0.7)',
+            borderColor: 'rgba(79, 70, 229, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Número de Contratos' } },
+            x: { title: { display: true, text: 'Ano' } }
+          }
+        }
+      });
+    }
+
+    function updateStatusChart() {
+      const counts = {};
+      table.rows({ filter: 'applied' }).data().toArray().forEach(c => {
+        const status = c["Situacao"] || "Sem Situação";
+        counts[status] = (counts[status] || 0) + 1;
+      });
+      const statusColors = {
+        'Vigente': 'rgba(139, 92, 246, 0.7)',      // Roxo
+        'Aguardando OIS': 'rgba(245, 158, 11, 0.7)', // Amarelo
+        'Expirado': 'rgba(107, 114, 128, 0.7)',   // Cinza
+        'Encerrado': 'rgba(16, 185, 129, 0.7)',   // Verde
+        'Rescindido': 'rgba(239, 68, 68, 0.7)',   // Vermelho
+        'Anulado': 'rgba(0, 0, 0, 0.7)',          // Preto
+        'Sem Situação': 'rgba(75, 85, 99, 0.7)'   // Cinza escuro (fallback)
+      };
+      const borderColors = {
+        'Vigente': 'rgba(139, 92, 246, 1)',
+        'Aguardando OIS': 'rgba(245, 158, 11, 1)',
+        'Expirado': 'rgba(107, 114, 128, 1)',
+        'Encerrado': 'rgba(16, 185, 129, 1)',
+        'Rescindido': 'rgba(239, 68, 68, 1)',
+        'Anulado': 'rgba(0, 0, 0, 1)',
+        'Sem Situação': 'rgba(75, 85, 99, 1)'
+      };
+      const ctx = document.getElementById("statusChart");
+      if (statusChart) statusChart.destroy();
+      statusChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: Object.keys(counts),
+          datasets: [{
+            data: Object.values(counts),
+            backgroundColor: Object.keys(counts).map(status => statusColors[status]),
+            borderColor: Object.keys(counts).map(status => borderColors[status]),
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom' },
+            title: { display: true, text: 'Distribuição por Situação' }
+          }
+        }
+      });
+    }
+
+    function updateExpiryChart() {
+      const months = Array(6).fill().map((_, i) => {
+        const d = new Date(today);
+        d.setMonth(d.getMonth() + i);
+        return d.toLocaleString('pt-BR', { month: 'short', year: 'numeric' });
+      });
+      const counts = Array(6).fill(0);
+      table.rows({ filter: 'applied' }).data().toArray().forEach(c => {
+        if (c["Situacao"] === "Vigente") {
+          const d = new Date(c["FinalVigencia"]);
+          const monthsDiff = (d.getFullYear() - today.getFullYear()) * 12 + d.getMonth() - today.getMonth();
+          if (monthsDiff >= 0 && monthsDiff < 6) {
+            counts[monthsDiff]++;
+          }
+        }
+      });
+      const ctx = document.getElementById("expiryChart");
+      if (expiryChart) expiryChart.destroy();
+      expiryChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: months,
+          datasets: [{
+            label: 'Contratos Vencendo',
+            data: counts,
+            borderColor: 'rgba(79, 70, 229, 1)',
+            backgroundColor: 'rgba(79, 70, 229, 0.2)',
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            title: { display: true, text: 'Vencimentos por Mês' }
+          },
+          scales: {
+            y: { beginAtZero: true, title: { display: true, text: 'Número de Contratos' } },
+            x: { title: { display: true, text: 'Mês' } }
+          }
+        }
+      });
+    }
+
+    $('#clearFilters').on('click', () => {
+      $('#yearFilter, #contratadoFilter, #descFilter, #objetoFilter, #statusFilter, #fiscalFilter, #daysFilter').val("");
+      table.draw();
+      updateAlert();
+      updateCharts();
+    });
+  </script>
+</body>
+</html>
