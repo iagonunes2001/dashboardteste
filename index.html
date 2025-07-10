@@ -171,27 +171,70 @@
     ©️ 2025 Dashboard de Contratos - Exemplo Interativo
   </footer>
 <script>
-/* ==== INÍCIO DO SCRIPT JS (COMPLETO) ==== */
+  // --- VARIÁVEIS GLOBAIS ---
+  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTtD2VpTWhwtm2HZprgXlOmkrN5inOpaAHhxjHxkyOeRvszgsRnmiBgOImLhHr4_w/pub?output=csv";
+  let contratos = [];
+  let contratosFiltrados = [];
+  let tabela = null;
+  let chartSituacao = null, chartAno = null, chartPrazo = null;
+  let termoBuscaUniversal = "";
 
-// --- VARIÁVEIS GLOBAIS ---
-const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTtD2VpTWhwtm2HZprgXlOmkrN5inOpaAHhxjHxkyOeRvszgsRnmiBgOImLhHr4_w/pub?output=csv";
-let contratos = [];
-let contratosFiltrados = [];
-let tabela = null;
-let chartSituacao = null, chartAno = null, chartPrazo = null;
-let termoBuscaUniversal = "";
+  // --- LISTA DE FISCAIS C-FISCON (ATUALIZADA) ---
+  const fiscaisCFISCON = [
+    "CARMEN LUCIA ULGUIM CHAGAS PADOIN",
+    "MARCIA BEHEREGARAY ARGOLLO MENDES",
+    "OTAVIO DA SILVA AFONSO",
+    "MAURICIO LEANDRO BORGES ROSA",
+    "DAWGLYN",
+    "FELIPE CURI",
+    "ARIADNE"
+  ];
 
-// --- LISTA DE FISCAIS C-FISCON (ATUALIZADA) ---
-const fiscaisCFISCON = [
-  "CARMEN LUCIA ULGUIM CHAGAS PADOIN",
-  "MARCIA BEHEREGARAY ARGOLLO MENDES",
-  "OTAVIO DA SILVA AFONSO",
-  "MAURICIO LEANDRO BORGES ROSA",
-  "DAWGLYN",
-  "FELIPE CURI",
-  "ARIADNE"
-];
- function normalizarNomeFiscal(nome) {
+  // --- FUNÇÕES AUXILIARES E FILTROS ---
+  function normSit(str) {
+    return (str || "")
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[–—-]/g, "-")
+      .replace(/\s+/g, " ").trim().toLowerCase();
+  }
+  function agruparSituacao(sit) {
+    if (!sit) return "Não Vigente";
+    const norm = normSit(sit);
+    if (norm.includes("vigente")) {
+      return "Vigente";
+    }
+    return "Não Vigente";
+  }
+  function fillSelectOptionsSituacao(selectId, array) {
+    const select = document.getElementById(selectId);
+    const seen = new Set();
+    array.forEach(c => {
+      const grp = agruparSituacao(c['Situação']);
+      if (grp) seen.add(grp);
+    });
+    const values = ["Vigente", "Não Vigente"].filter(v => seen.has(v));
+    let options = `<option value="">Todas</option>`;
+    values.forEach(val => {
+      options += `<option value="${val}">${val}</option>`;
+    });
+    select.innerHTML = options;
+  }
+  function normalizeCol(str) {
+    return (str||'')
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[\r\n]+/g, " ")
+      .replace(/\s+/g, " ")
+      .replace(/^\s+|\s+$/g, "")
+      .replace(/[^a-zA-Z0-9 ]/g, "")
+      .toLowerCase();
+  }
+  function limparPrefixoNumero(texto) {
+    return (texto || '')
+      .replace(/^\s*\d+\s*[-–—]\s*/g, '')
+      .replace(/^\s*\d+\s+/g, '')
+      .trim();
+  }
+  function normalizarNomeFiscal(nome) {
     return (nome || '')
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
       .replace(/\s+/g, " ")
@@ -769,8 +812,6 @@ const fiscaisCFISCON = [
     aplicarFiltros();
     desenharGraficos();
   }
-
-  // --- INTEGRAÇÃO: LOADING E GOOGLE SHEETS CSV ---
   function showLoading(show = true) {
     document.getElementById('loadingOverlay').classList.toggle('hidden', !show);
   }
@@ -796,8 +837,6 @@ const fiscaisCFISCON = [
       }
     });
   }
-
-  // --- EVENTOS DE INTERFACE ---
   document.addEventListener("DOMContentLoaded", function(){
     document.getElementById('buscaUniversal').addEventListener('input', function() {
       termoBuscaUniversal = this.value.trim();
@@ -842,12 +881,8 @@ const fiscaisCFISCON = [
     };
     carregarContratosPlanilha();
   });
-
-  // --- CHART.JS: CORRIGIDO PARA DESTRUIR ANTES DE REDESENHAR ---
   function desenharGraficos() {
     Chart.register(ChartDataLabels);
-
-    // Gráfico Situação
     const situacoes = {};
     contratosFiltrados.forEach(c => {
       const grupo = agruparSituacao(c['Situação']);
@@ -873,8 +908,6 @@ const fiscaisCFISCON = [
         }
       }
     });
-
-    // Gráfico Ano
     const anos = {};
     contratosFiltrados.forEach(c => {
       if (c['AnoContrato']) anos[c['AnoContrato']] = (anos[c['AnoContrato']] || 0) + 1;
@@ -900,8 +933,6 @@ const fiscaisCFISCON = [
         }
       }
     });
-
-    // Gráfico Prazo
     const faixas = [
       { label: 'Até 6 meses', min: 0, max: 6 },
       { label: '7 a 12 meses', min: 7, max: 12 },
