@@ -715,9 +715,19 @@
       bgRow = '#D1FFD1';
     }
     let ordenados = [...lista].sort((a, b) => {
+      let diasA = diasAteVencimento(a['Final Vigência']);
+      let diasB = diasAteVencimento(b['Final Vigência']);
+      // Se diasA ou diasB for null, coloca no final
+      if (diasA === null && diasB === null) return 0;
+      if (diasA === null) return 1;
+      if (diasB === null) return -1;
+      // Ordem crescente por dias até vencimento
+      if (diasA !== diasB) return diasA - diasB;
+      // Critério secundário: C-FISCON primeiro
       let aCF = contratoTemFiscalCFISCON(a) ? 0 : 1;
       let bCF = contratoTemFiscalCFISCON(b) ? 0 : 1;
       if (aCF !== bCF) return aCF - bCF;
+      // Critério terciário: ordem alfabética por Contratado
       return (a['Contratado'] || '').localeCompare((b['Contratado'] || ''), 'pt-BR');
     });
     let html = `
