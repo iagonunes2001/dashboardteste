@@ -237,7 +237,9 @@
   function normalizarNomeFiscal(nome) {
     return (nome || '')
       .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+      .replace(/[-–—]/g, " ")
       .replace(/\s+/g, " ")
+      .replace(/[^A-Z ]/gi, "")
       .toUpperCase().trim();
   }
   let cacheFiscais = new Map();
@@ -298,6 +300,7 @@
               <th class="px-2 py-1">Contratado</th>
               <th class="px-2 py-1">Final Vigência</th>
               <th class="px-2 py-1">Prazo</th>
+              <th class="px-2 py-1">Vence em</th>
               <th class="px-2 py-1">Situação</th>
               <th class="px-2 py-1"></th>
             </tr>
@@ -306,10 +309,12 @@
             ${contratosDoFiscal.map(c => {
               let dias = diasAteVencimento(c['Final Vigência']);
               let bgColor = '';
-              if (dias !== null && dias >= 0 && dias <= 30) {
-                bgColor = 'background-color:#F4A26133;';
-              } else if (dias !== null && dias > 30 && dias <= 60) {
-                bgColor = 'background-color:#00A65133;';
+              if (dias !== null && dias >= 0 && dias < 30) {
+                bgColor = 'background-color:#FFCCCC;';
+              } else if (dias !== null && dias >= 30 && dias < 60) {
+                bgColor = 'background-color:#FFF9CC;';
+              } else if (dias !== null && dias >= 60) {
+                bgColor = 'background-color:#D1FFD1;';
               }
               let cfisconStyle = contratoTemFiscalCFISCON(c) ? 'font-weight:bold;border-left:4px solid #1E4069;' : '';
               return `
@@ -319,6 +324,7 @@
                 <td class="px-2 py-1">${c['Contratado'] || ''}</td>
                 <td class="px-2 py-1">${formatDateBR(c['Final Vigência']) || ''}</td>
                 <td class="px-2 py-1">${prazoMeses(c['Início Vigência'], c['Final Vigência'])}</td>
+                <td class="px-2 py-1">${formatDiasVencimento(c['Final Vigência'])}</td>
                 <td class="px-2 py-1">${c['Situação'] || ''}</td>
                 <td class="px-2 py-1 text-center">
                   <button class="ver-detalhes-mini bg-[#1E4069] hover:bg-[#4DA8DA] text-white px-2 py-1 rounded text-xs" data-idx="${contratos.indexOf(c)}" title="Ver detalhes">Ver detalhes</button>
@@ -343,6 +349,7 @@
       };
     });
   }
+  // Atualizado para usar a normalização correta e remover duplicidade visual de fiscais.
   function uniqueOptionsCaseInsensitive(array, field, limparNumero = false, multiSplit = false) {
     const seen = new Map();
     array.forEach(item => {
@@ -353,7 +360,7 @@
       }
       vals.forEach(v => {
         if (limparNumero) v = limparPrefixoNumero(v);
-        const valNorm = v.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+        const valNorm = normalizarNomeFiscal(v);
         if (valNorm && !seen.has(valNorm)) {
           seen.set(valNorm, v);
         }
@@ -482,6 +489,15 @@
     hoje.setHours(0,0,0,0);
     return Math.ceil((dataFinal - hoje) / (1000 * 60 * 60 * 24));
   }
+  function formatDiasVencimento(finalVigencia) {
+    let dias = diasAteVencimento(finalVigencia);
+    if (dias === null) return "";
+    if (dias === 0) return "vence hoje";
+    if (dias === 1) return "vence em 1 dia";
+    if (dias > 1) return `vence em ${dias} dias`;
+    if (dias < 0) return "vencido";
+    return "";
+  }
   function atualizarFiltros() {
     fillSelectOptions('filtroAnoContrato', contratos, 'AnoContrato');
     fillSelectOptions('filtroFiscal', contratos, 'Fiscal(is)', true, true, true, true);
@@ -521,7 +537,7 @@
         let fiscaisArr = (c['Fiscal(is)'] ?? '').split(/[,;\n]+/)
           .map(f => limparPrefixoNumero(f).toLowerCase().trim())
           .filter(Boolean);
-        if (!fiscaisArr.includes(fiscal.toLowerCase())) match = false;
+        if (!fiscaisArr.some(f => normalizarNomeFiscal(f) === normalizarNomeFiscal(fiscal))) match = false;
       }
       if (situacao && agruparSituacao(c['Situação']) !== situacao) match = false;
       if (vig) {
@@ -578,6 +594,13 @@
           return prazoMeses(row["Início Vigência"], row["Final Vigência"]);
         }
       },
+      { 
+        title: "Vence em", 
+        data: "Final Vigência",
+        render: function(data, type, row) {
+          return formatDiasVencimento(data);
+        }
+      },
       { title: "Situação", data: "Situação", type: "string" },
       { 
         title: "",
@@ -608,10 +631,12 @@
       },
       createdRow: function(row, data) {
         let dias = diasAteVencimento(data['Final Vigência']);
-        if (dias !== null && dias >= 0 && dias <= 30) {
-          $(row).css('background-color', '#F4A26133');
-        } else if (dias !== null && dias > 30 && dias <= 60) {
-          $(row).css('background-color', '#00A65133');
+        if (dias !== null && dias >= 0 && dias < 30) {
+          $(row).css('background-color', '#FFCCCC'); // vermelho claro
+        } else if (dias !== null && dias >= 30 && dias < 60) {
+          $(row).css('background-color', '#FFF9CC'); // amarelo claro
+        } else if (dias !== null && dias >= 60) {
+          $(row).css('background-color', '#D1FFD1'); // verde claro
         }
         if (contratoTemFiscalCFISCON(data)) {
           $(row).css('font-weight', 'bold');
@@ -634,22 +659,22 @@
     let html = '';
     const vencendo30 = contratosFiltrados.filter(c => {
       let dias = diasAteVencimento(c['Final Vigência']);
-      return dias !== null && dias >= 0 && dias <= 30;
+      return dias !== null && dias >= 0 && dias < 30;
     });
     const vencendo60 = contratosFiltrados.filter(c => {
       let dias = diasAteVencimento(c['Final Vigência']);
-      return dias !== null && dias > 30 && dias <= 60;
+      return dias !== null && dias >= 30 && dias < 60;
     });
     html += renderAvisoComMiniTabela(
       "Atenção", 
-      "orange", 
+      "red", 
       vencendo30, 
       "contratos-ate30", 
       "Ver mais contratos vencendo em até 30 dias"
     );
     html += renderAvisoComMiniTabela(
       "Alerta", 
-      "green", 
+      "yellow", 
       vencendo60, 
       "contratos-ate60", 
       "Ver mais contratos vencendo em até 60 dias"
@@ -672,8 +697,20 @@
   }
   function renderAvisoComMiniTabela(titulo, cor, lista, boxId, labelBtn) {
     if (!lista.length) return '';
-    let corAviso = cor === 'orange' ? 'bg-[#F4A261]/10 border-[#F4A261] text-[#333333]' : 'bg-[#00A651]/10 border-[#00A651] text-[#333333]';
-    let corHead = cor === 'orange' ? 'bg-[#F4A261]/20' : 'bg-[#00A651]/20';
+    let corAviso, corHead, bgRow;
+    if (cor === 'red') {
+      corAviso = 'bg-[#FFCCCC]/10 border-[#FFCCCC] text-[#333333]';
+      corHead = 'bg-[#FFCCCC]/20';
+      bgRow = '#FFCCCC';
+    } else if (cor === 'yellow') {
+      corAviso = 'bg-[#FFF9CC]/10 border-[#FFF9CC] text-[#333333]';
+      corHead = 'bg-[#FFF9CC]/20';
+      bgRow = '#FFF9CC';
+    } else {
+      corAviso = 'bg-[#D1FFD1]/10 border-[#D1FFD1] text-[#333333]';
+      corHead = 'bg-[#D1FFD1]/20';
+      bgRow = '#D1FFD1';
+    }
     let ordenados = [...lista].sort((a, b) => {
       let aCF = contratoTemFiscalCFISCON(a) ? 0 : 1;
       let bCF = contratoTemFiscalCFISCON(b) ? 0 : 1;
@@ -682,7 +719,7 @@
     });
     let html = `
     <div class="p-4 mb-2 ${corAviso} border-l-4 rounded">
-      <strong>${titulo}:</strong> ${lista.length} contrato(s) vencendo em até <b>${cor === 'orange' ? '30' : '60'} dias</b>!
+      <strong>${titulo}:</strong> ${lista.length} contrato(s) vencendo em até <b>${cor === 'red' ? '30' : '60'} dias</b>!
     </div>
     <div id="${boxId}-mini">
       <div class="overflow-x-auto mb-2">
@@ -694,24 +731,37 @@
               <th class="px-2 py-1">Contratado</th>
               <th class="px-2 py-1">Final Vigência</th>
               <th class="px-2 py-1">Prazo</th>
+              <th class="px-2 py-1">Vence em</th>
               <th class="px-2 py-1">Situação</th>
               <th class="px-2 py-1"> </th>
             </tr>
           </thead>
           <tbody>
-            ${ordenados.slice(0,5).map((c, idx) => `
-              <tr${contratoTemFiscalCFISCON(c) ? ' style="font-weight:bold;border-left:4px solid #1E4069"' : ''}>
+            ${ordenados.slice(0,5).map((c, idx) => {
+              let dias = diasAteVencimento(c['Final Vigência']);
+              let bgColor = '';
+              if (dias !== null && dias >= 0 && dias < 30) {
+                bgColor = 'background-color:#FFCCCC;';
+              } else if (dias !== null && dias >= 30 && dias < 60) {
+                bgColor = 'background-color:#FFF9CC;';
+              } else if (dias !== null && dias >= 60) {
+                bgColor = 'background-color:#D1FFD1;';
+              }
+              return `
+              <tr${contratoTemFiscalCFISCON(c) ? ' style="font-weight:bold;border-left:4px solid #1E4069;' + bgColor + '"' : bgColor ? ' style="' + bgColor + '"' : ''}>
                 <td class="px-2 py-1">${c['N° Contrato'] || ''}</td>
                 <td class="px-2 py-1">${c['AnoContrato'] || ''}</td>
                 <td class="px-2 py-1">${c['Contratado'] || ''}</td>
                 <td class="px-2 py-1">${formatDateBR(c['Final Vigência']) || ''}</td>
                 <td class="px-2 py-1">${prazoMeses(c['Início Vigência'], c['Final Vigência'])}</td>
+                <td class="px-2 py-1">${formatDiasVencimento(c['Final Vigência'])}</td>
                 <td class="px-2 py-1">${c['Situação'] || ''}</td>
                 <td class="px-2 py-1 text-center">
                   <button class="ver-detalhes-mini bg-[#1E4069] hover:bg-[#4DA8DA] text-white px-2 py-1 rounded text-xs" data-idx="${contratos.indexOf(c)}" title="Ver detalhes">Ver detalhes</button>
                 </td>
               </tr>
-            `).join('')}
+            `;
+            }).join('')}
           </tbody>
         </table>
       </div>
@@ -727,24 +777,37 @@
               <th class="px-2 py-1">Contratado</th>
               <th class="px-2 py-1">Final Vigência</th>
               <th class="px-2 py-1">Prazo</th>
+              <th class="px-2 py-1">Vence em</th>
               <th class="px-2 py-1">Situação</th>
               <th class="px-2 py-1"> </th>
             </tr>
           </thead>
           <tbody>
-            ${ordenados.map((c, idx) => `
-              <tr${contratoTemFiscalCFISCON(c) ? ' style="font-weight:bold;border-left:4px solid #1E4069"' : ''}>
+            ${ordenados.map((c, idx) => {
+              let dias = diasAteVencimento(c['Final Vigência']);
+              let bgColor = '';
+              if (dias !== null && dias >= 0 && dias < 30) {
+                bgColor = 'background-color:#FFCCCC;';
+              } else if (dias !== null && dias >= 30 && dias < 60) {
+                bgColor = 'background-color:#FFF9CC;';
+              } else if (dias !== null && dias >= 60) {
+                bgColor = 'background-color:#D1FFD1;';
+              }
+              return `
+              <tr${contratoTemFiscalCFISCON(c) ? ' style="font-weight:bold;border-left:4px solid #1E4069;' + bgColor + '"' : bgColor ? ' style="' + bgColor + '"' : ''}>
                 <td class="px-2 py-1">${c['N° Contrato'] || ''}</td>
                 <td class="px-2 py-1">${c['AnoContrato'] || ''}</td>
                 <td class="px-2 py-1">${c['Contratado'] || ''}</td>
                 <td class="px-2 py-1">${formatDateBR(c['Final Vigência']) || ''}</td>
                 <td class="px-2 py-1">${prazoMeses(c['Início Vigência'], c['Final Vigência'])}</td>
+                <td class="px-2 py-1">${formatDiasVencimento(c['Final Vigência'])}</td>
                 <td class="px-2 py-1">${c['Situação'] || ''}</td>
                 <td class="px-2 py-1 text-center">
                   <button class="ver-detalhes-mini bg-[#1E4069] hover:bg-[#4DA8DA] text-white px-2 py-1 rounded text-xs" data-idx="${contratos.indexOf(c)}" title="Ver detalhes">Ver detalhes</button>
                 </td>
               </tr>
-            `).join('')}
+            `;
+            }).join('')}
           </tbody>
         </table>
       </div>
@@ -771,6 +834,10 @@
       <tr>
           <th class="py-1 px-2 bg-[#E6ECEF] font-semibold w-40">Prazo (automático)</th>
           <td class="py-1 px-2">${prazoMeses(contrato['Início Vigência'], contrato['Final Vigência'])}</td>
+      </tr>
+      <tr>
+          <th class="py-1 px-2 bg-[#E6ECEF] font-semibold w-40">Vence em</th>
+          <td class="py-1 px-2">${formatDiasVencimento(contrato['Final Vigência'])}</td>
       </tr>
       </tbody>
     </table>`;
