@@ -179,15 +179,15 @@
   let chartSituacao = null, chartAno = null, chartPrazo = null;
   let termoBuscaUniversal = "";
 
-  // --- LISTA DE FISCAIS C-FISCON (USANDO NOMES NORMALIZADOS) ---
-  const fiscaisCFISCON = [
-    "ARIADNE SILVEIRA TUPY ASSU",
-    "DAWGLYN STREB VELHO",
-    "FELIPE PAIVA CURI",
-    "CARMEN LUCIA ULGUIM CHAGAS PADOIN",
-    "MARCIA BEHEREGARAY ARGOLLO MENDES",
-    "OTAVIO DA SILVA AFONSO",
-    "MAURICIO LEANDRO BORGES ROSA"
+  // --- LISTA DE FISCAIS C-FISCON (USANDO NOMES NORMALIZADOS E EXIBÍVEIS) ---
+  const fiscaisCFISCON_EXIBIVEL = [
+    { norm: "CARMEN LUCIA ULGUIM CHAGAS PADOIN", exib: "Carmen Lucia Ulguim Chagas Padoin" },
+    { norm: "MARCIA BEHEREGARAY ARGOLLO MENDES", exib: "Marcia Beheregaray Argollo Mendes" },
+    { norm: "MAURICIO LEANDRO BORGES ROSA", exib: "Mauricio Leandro Borges Rosa" },
+    { norm: "OTAVIO DA SILVA AFONSO", exib: "Otavio da Silva Afonso" },
+    { norm: "ARIADNE SILVEIRA TUPY ASSU", exib: "Ariadne Silveira Tupy Assu" },
+    { norm: "DAWGLYN STREB VELHO", exib: "Dawglyn Streb Velho" },
+    { norm: "FELIPE PAIVA CURI", exib: "Felipe Paiva Curi" }
   ];
 
   // --- FUNÇÕES AUXILIARES E FILTROS ---
@@ -249,57 +249,25 @@
 
   // Obtém o nome exibível do fiscal, dado o nome normalizado
   function nomeExibivelFiscal(normFiscal) {
-    // Mapear sempre para o mais "completo" e bonito
-    switch (normFiscal) {
-      case "ARIADNE SILVEIRA TUPY ASSU":
-        return "Ariadne Silveira Tupy Assu";
-      case "DAWGLYN STREB VELHO":
-        return "Dawglyn Streb Velho";
-      case "FELIPE PAIVA CURI":
-        return "Felipe Paiva Curi";
-      case "CARMEN LUCIA ULGUIM CHAGAS PADOIN":
-        return "Carmen Lucia Ulguim Chagas Padoin";
-      case "MARCIA BEHEREGARAY ARGOLLO MENDES":
-        return "Marcia Beheregarray Argollo Mendes";
-      case "OTAVIO DA SILVA AFONSO":
-        return "Otavio da Silva Afonso";
-      case "MAURICIO LEANDRO BORGES ROSA":
-        return "Mauricio Leandro Borges Rosa";
-      default:
-        // Fallback: só capitaliza primeira letra de cada palavra
-        return normFiscal
-          .toLowerCase()
-          .replace(/(^|\s)\S/g, l => l.toUpperCase());
-    }
+    const fiscal = fiscaisCFISCON_EXIBIVEL.find(f => f.norm === normFiscal);
+    if (fiscal) return fiscal.exib;
+    // Fallback: só capitaliza primeira letra de cada palavra
+    return normFiscal
+      .toLowerCase()
+      .replace(/(^|\s)\S/g, l => l.toUpperCase());
   }
 
   let cacheFiscais = new Map();
-  function getFiscaisCFISCONPresentes() {
-    let presentes = new Set();
-    contratos.forEach(contrato => {
-      (contrato['Fiscal(is)'] ?? "").split(/[,;\n]+/).forEach(fiscal => {
-        const nomeLimpo = limparPrefixoNumero(fiscal);
-        const norm = normalizarNomeFiscal(nomeLimpo);
-        fiscaisCFISCON.forEach(fiscalCfiscon => {
-          if (norm === fiscalCfiscon) presentes.add(fiscalCfiscon);
-        });
-      });
-    });
-    return Array.from(presentes);
-  }
-
   function renderPainelFiscaisCFISCON() {
-    const fiscaisPresentes = getFiscaisCFISCONPresentes();
-    if (fiscaisPresentes.length === 0) {
+    if (fiscaisCFISCON_EXIBIVEL.length === 0) {
       document.getElementById('painelFiscaisCFISCON').innerHTML = '';
       return;
     }
-    fiscaisPresentes.sort((a, b) => nomeExibivelFiscal(a).localeCompare(nomeExibivelFiscal(b), 'pt-BR'));
     let html = `<div class="mb-6 p-4 bg-[#E6ECEF] border-l-4 border-[#1E4069] rounded shadow">
       <strong>Contratos C-FISCON:</strong>
       <div class="flex flex-wrap gap-2 mt-2">`;
-    fiscaisPresentes.forEach((norm, idx) => {
-      html += `<button class="btn-fiscal-cfiscon bg-[#1E4069] hover:bg-[#4DA8DA] text-white px-3 py-1 rounded text-xs font-semibold" data-nome="${norm}">${nomeExibivelFiscal(norm)}</button>`;
+    fiscaisCFISCON_EXIBIVEL.forEach(obj => {
+      html += `<button class="btn-fiscal-cfiscon bg-[#1E4069] hover:bg-[#4DA8DA] text-white px-3 py-1 rounded text-xs font-semibold" data-nome="${obj.norm}">${obj.exib}</button>`;
     });
     html += `</div>
       <div id="cfiscon-contratos-lista" class="mt-4 hidden"></div>
@@ -409,7 +377,8 @@
       let cfiscon = [], outros = [];
       values.forEach(val => {
         let norm = normalizarNomeFiscal(val);
-        if (fiscaisCFISCON.includes(norm)) {
+        const isCFISCON = fiscaisCFISCON_EXIBIVEL.some(f => f.norm === norm);
+        if (isCFISCON) {
           cfiscon.push(val);
         } else {
           outros.push(val);
@@ -588,7 +557,7 @@
   function contratoTemFiscalCFISCON(contrato) {
     return (contrato['Fiscal(is)'] ?? '').split(/[,;\n]+/).some(f => {
       const nome = limparPrefixoNumero(f);
-      return fiscaisCFISCON.includes(normalizarNomeFiscal(nome));
+      return fiscaisCFISCON_EXIBIVEL.some(fiscal => fiscal.norm === normalizarNomeFiscal(nome));
     });
   }
   function atualizarTabela() {
