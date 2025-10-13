@@ -9,7 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
   <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
   <style>
     #modalDetalhes .modal-inner, #compareModal .modal-inner { max-height: 80vh; overflow-y: auto; max-width: 90vw; width: 1200px; }
@@ -443,26 +443,26 @@
   // --- FILTROS E LÓGICA DA TABELA PRINCIPAL ---
   function aplicarFiltros() {
   	const ano = $('#filtroAnoContrato').val();
-  	const vig = $('#filtroFinalVigencia').val();
-  	const tipoObjeto = $('#filtroTipoObjeto').val();
-  	const fiscal = $('#filtroFiscal').val();
-  	const situacao = $('#filtroSituacao').val();
-  	
-  	const normalizeSearch = (str) => (str || '').toString().toLowerCase().replace(/[.\-\/]/g, '');
-  	const termoNormalizado = normalizeSearch(termoBuscaUniversal);
-  	contratosFiltrados = contratos.filter(c => {
-  		if (termoBuscaUniversal && !Object.values(c).some(val => normalizeSearch(val).includes(termoNormalizado))) return false;
-  		if (ano && String(c.AnoContrato ?? '') !== ano) return false;
-  		if (tipoObjeto && mapearTipoObjeto(c.Objeto) !== tipoObjeto) return false;
-  		if (fiscal && !(c.Fiscais ?? '').split(/[,;\n]+/).map(f => limparPrefixoNumero(f).trim()).includes(fiscal)) return false;
-  		if (situacao && agruparSituacao(c.Situacao) !== situacao) return false;
-  		if (vig) { let dias = diasAteVencimento(c.FinalVigencia); if (dias === null || dias < 0 || dias > Number(vig)) return false; }
-  		return true;
-  	});
-  	atualizarTabela();
-  	atualizarAvisosVencimento();
-  	renderPainelFiscaisCFISCON();
-  	desenharGraficos();
+    const vig = $('#filtroFinalVigencia').val();
+    const tipoObjeto = $('#filtroTipoObjeto').val();
+    const fiscal = $('#filtroFiscal').val();
+    const situacao = $('#filtroSituacao').val();
+   
+    const normalizeSearch = (str) => (str || '').toString().toLowerCase().replace(/[.\-\/]/g, '');
+    const termoNormalizado = normalizeSearch(termoBuscaUniversal);
+    contratosFiltrados = contratos.filter(c => {
+        if (termoBuscaUniversal && !Object.values(c).some(val => normalizeSearch(val).includes(termoNormalizado))) return false;
+        if (ano && String(c.AnoContrato ?? '') !== ano) return false;
+        if (tipoObjeto && mapearTipoObjeto(c.Objeto) !== tipoObjeto) return false;
+        if (fiscal && !(c.Fiscais ?? '').split(/[,;\n]+/).map(f => limparPrefixoNumero(f).trim()).includes(fiscal)) return false;
+        if (situacao && agruparSituacao(c.Situacao) !== situacao) return false;
+        if (vig) { let dias = diasAteVencimento(c.FinalVigencia); if (dias === null || dias < 0 || dias > Number(vig)) return false; }
+        return true;
+    });
+    atualizarTabela();
+    atualizarAvisosVencimento();
+    renderPainelFiscaisCFISCON();
+    desenharGraficos();
   }
   function fillSelectOptions(selectId, array, field, multiSplit = false) { const select = $(`#${selectId}`); const seen = new Set(); array.forEach(item => { let values = multiSplit ? (item[field] ?? '').split(/[,;\n]+/) : [item[field]]; values.forEach(v => { const cleaned = multiSplit ? limparPrefixoNumero(v).trim() : String(v).trim(); if (cleaned) seen.add(cleaned); }); }); const options = Array.from(seen).sort((a,b) => a.localeCompare(b)); select.html('<option value="">Todos</option>' + options.map(o => `<option value="${o}">${o}</option>`).join('')); }
   function fillSelectOptionsSituacao(selectId, array) { const select = $(`#${selectId}`); const seen = new Set(); array.forEach(c => { const grp = agruparSituacao(c.Situacao); if (grp) seen.add(grp); }); const values = ["Vigente", "Expirado", "Encerrado", "Não Vigente"].filter(v => seen.has(v)); select.html('<option value="">Todas</option>' + values.map(val => `<option value="${val}">${val}</option>`).join('')); }
