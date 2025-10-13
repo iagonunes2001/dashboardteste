@@ -1,699 +1,772 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Dashboard de Análise de Contratos</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
-  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-  <style>
-    #modalDetalhes .modal-inner, #compareModal .modal-inner { max-height: 80vh; overflow-y: auto; max-width: 90vw; width: 1200px; }
-    .hidden { display: none !important; }
-    .nav-btn.active { background: #1E4069; color: #FFFFFF; }
-    .nav-btn { background: #FFFFFF; color: #1E4069; border: 1px solid #1E4069; }
-    .nav-btn:hover { background: #4DA8DA; color: #FFFFFF; }
-    #loadingOverlay, #savingOverlay { background: rgba(255,255,255,0.7); position: fixed; z-index: 1000; inset: 0; display: flex; align-items: center; justify-content: center; }
-    .spinner { border: 6px solid #E6ECEF; border-top: 6px solid #1E4069; border-radius: 50%; width: 56px; height: 56px; animation: spin 1s linear infinite; }
-    @keyframes spin { 0% {transform: rotate(0deg);} 100% {transform: rotate(360deg);} }
-    .btn { background: #1E4069; color: #FFFFFF; transition: background-color 0.3s; }
-    .btn:hover { background: #4DA8DA; }
-    .diferente { background-color: #FFF9CC; font-weight: bold; }
-    .form-input { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem; font-size: 0.875rem; }
-    #tabelaContratos tbody tr:hover,
-    .mini-table tbody tr:hover {
-      background-color: #E6ECEF !important;
-      cursor: pointer;
-    }
-  </style>
+  <meta charset="UTF-8">
+  <title>Dashboard de Análise de Contratos</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/jquery.dataTables.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+  <style>
+    #modalDetalhes .modal-inner, #compareModal .modal-inner { max-height: 80vh; overflow-y: auto; max-width: 90vw; width: 1200px; }
+    .hidden { display: none !important; }
+    .nav-btn.active { background: #1E4069; color: #FFFFFF; }
+    .nav-btn { background: #FFFFFF; color: #1E4069; border: 1px solid #1E4069; }
+    .nav-btn:hover { background: #4DA8DA; color: #FFFFFF; }
+    #loadingOverlay, #savingOverlay { background: rgba(255,255,255,0.7); position: fixed; z-index: 1000; inset: 0; display: flex; align-items: center; justify-content: center; }
+    .spinner { border: 6px solid #E6ECEF; border-top: 6px solid #1E4069; border-radius: 50%; width: 56px; height: 56px; animation: spin 1s linear infinite; }
+    @keyframes spin { 0% {transform: rotate(0deg);} 100% {transform: rotate(360deg);} }
+    .btn { background: #1E4069; color: #FFFFFF; transition: background-color 0.3s; }
+    .btn:hover { background: #4DA8DA; }
+    .diferente { background-color: #FFF9CC; font-weight: bold; }
+    .form-input { width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem; font-size: 0.875rem; }
+    #tabelaContratos tbody tr:hover,
+    .mini-table tbody tr:hover {
+      background-color: #E6ECEF !important;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
-  <div id="loadingOverlay" class="hidden">
-    <div>
-      <div class="spinner mx-auto"></div>
-      <div id="loadingText" class="text-[#1E4069] text-lg mt-3 text-center font-bold">Carregando contratos...</div>
-    </div>
-  </div>
-   <div id="savingOverlay" class="hidden">
-    <div>
-      <div class="spinner mx-auto"></div>
-      <div id="savingText" class="text-[#1E4069] text-lg mt-3 text-center font-bold">Salvando...</div>
-    </div>
-  </div>
-  <!-- Container de Notificação -->
-  <div id="notification" class="hidden fixed top-5 right-5 z-[2000] p-4 rounded-lg shadow-lg text-white">
-    <span id="notification-message"></span>
-  </div>
-  <header class="bg-[#1E4069] text-white p-4 shadow flex items-center justify-between flex-wrap gap-2">
-    <h1 class="text-2xl font-bold">Dashboard de Análise de Contratos</h1>
-    <div class="flex items-center gap-2">
-      <button id="navTabela" class="nav-btn rounded px-4 py-2 font-medium active" type="button">Tabela</button>
-      <button id="navGraficos" class="nav-btn rounded px-4 py-2 font-medium" type="button">Gráficos</button>
-      <button id="navDuplicados" class="nav-btn rounded px-4 py-2 font-medium" type="button">Contratos Duplicados</button>
-    </div>
-  </header>
-  <main class="flex-1 p-6">
-    <!-- ========= PAINEL TABELA (PRINCIPAL) ========= -->
-    <div id="painelTabela">
-      <div id="painelFiscaisCFISCON"></div>
-      <section id="avisosVencimento" class="mb-6"></section>
-      <section class="bg-white p-6 rounded shadow mb-6">
-        <div class="mb-4">
-          <label for="buscaUniversal" class="block text-sm font-semibold mb-1">Busca Universal</label>
-          <input type="text" id="buscaUniversal" placeholder="Digite nome, CNPJ, objeto, número do contrato ou qualquer termo..." class="w-full max-w-md p-2 border rounded">
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4" id="filtros">
-           <div>
-             <label class="block text-sm font-semibold mb-1">Ano do Contrato</label>
-             <select id="filtroAnoContrato" class="w-full border rounded px-2 py-1"></select>
-           </div>
-           <div>
-             <label class="block text-sm font-semibold mb-1">Final Vigência</label>
-             <select id="filtroFinalVigencia" class="w-full border rounded px-2 py-1">
-               <option value="">Todas</option>
-               <option value="30">Vencem em até 30 dias</option>
-               <option value="60">Vencem em até 60 dias</option>
-               <option value="90">Vencem em até 90 dias</option>
-               <option value="120">Vencem em até 120 dias</option>
-               <option value="150">Vencem em até 150 dias</option>
-               <option value="180">Vencem em até 180 dias</option>
-             </select>
-           </div>
-           <div>
-             <label class="block text-sm font-semibold mb-1">Tipo de Objeto</label>
-             <select id="filtroTipoObjeto" class="w-full border rounded px-2 py-1">
-               <option value="">Todos</option>
-               <option value="Compras">Compras</option>
-               <option value="Outros Serviços">Outros Serviços</option>
-               <option value="Obras e Serviços de Engenharia">Obras e Serviços de Engenharia</option>
-             </select>
-           </div>
-           <div>
-             <label class="block text-sm font-semibold mb-1">Fiscal(is)</label>
-             <select id="filtroFiscal" class="w-full border rounded px-2 py-1"></select>
-           </div>
-           <div>
-             <label class="block text-sm font-semibold mb-1">Situação</label>
-             <select id="filtroSituacao" class="w-full border rounded px-2 py-1"></select>
-           </div>
-        </div>
-        <div class="mt-4">
-          <button id="limparFiltros" class="bg-[#E6ECEF] hover:bg-[#4DA8DA] text-[#333333] px-4 py-2 rounded">Limpar Filtros</button>
-        </div>
-      </section>
-      <section class="bg-white p-6 rounded shadow">
-        <div class="flex justify-between items-center mb-4">
-          <h2 class="text-lg font-bold">Tabela de Contratos</h2>
-          <button id="btnNovoContrato" class="btn px-4 py-2 rounded font-semibold text-sm">Adicionar Novo Contrato</button>
-        </div>
-        <div class="overflow-x-auto">
-          <table id="tabelaContratos" class="display w-full"></table>
-        </div>
-      </section>
-    </div>
-   
-    <!-- Painel Gráficos -->
-    <div id="painelGraficos" class="hidden">
-        <section class="bg-white p-6 rounded shadow mb-6">
-            <h2 class="text-lg font-bold mb-4">Gráficos</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              <div>
-                <h3 class="font-semibold mb-2 text-sm text-gray-700">Situação dos Contratos</h3>
-                <canvas id="graficoSituacao"></canvas>
-            	</div>
-            	<div>
-            		<h3 class="font-semibold mb-2 text-sm text-gray-700">Contratos por Ano</h3>
-            		<canvas id="graficoAno"></canvas>
-            	</div>
-            	<div>
-            		<h3 class="font-semibold mb-2 text-sm font-bold text-gray-700">Prazos dos Contratos</h3>
-            		<canvas id="graficoPrazo"></canvas>
-            	</div>
-            </div>
-        </section>
-    </div>
-    <!-- Painel Contratos Duplicados -->
-    <div id="painelDuplicados" class="hidden">
-        <section id="controles" class="bg-white p-6 rounded shadow mb-6">
-          <div class="border-b pb-4 mb-4">
-            <h2 class="text-lg font-bold text-gray-800">1. Critérios para Duplicidade</h2>
-            <p class="text-sm text-gray-600 mt-1">Selecione os campos que devem ser idênticos para um contrato ser considerado um duplicado.</p>
-          </div>
-          <div id="criterios-selecao" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <!-- Checkboxes serão inseridos aqui pelo JS -->
-          </div>
-          <div class="mt-6 text-center">
-            <button id="verificarDuplicados" class="btn px-6 py-2 rounded font-semibold">Verificar Duplicados</button>
-          </div>
-        </section>
-        <section id="resultados" class="bg-white p-6 rounded shadow">
-            <div class="border-b pb-4 mb-4">
-            	<h2 class="text-lg font-bold text-gray-800">2. Resultados da Análise</h2>
-            </div>
-            <div id="resultados-conteudo" class="text-center text-gray-500">
-            	<p>Aguardando a verificação...</p>
-            </div>
-        </section>
-    </div>
-  </main>
-  <!-- ========= MODAL DE SENHA ========= -->
-  <div id="passwordModal" class="fixed inset-0 z-[1004] bg-black bg-opacity-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded shadow-lg p-6 w-full max-w-sm">
-      <h3 class="text-lg font-bold mb-4">Acesso Restrito</h3>
-      <p class="text-sm text-gray-600 mb-4">Por favor, insira a senha de administrador para continuar.</p>
-      <form id="passwordForm">
-        <input type="password" id="passwordInput" class="form-input w-full" placeholder="Senha">
-        <p id="passwordError" class="text-red-500 text-xs mt-1 hidden">Senha incorreta!</p>
-        <div class="mt-4 flex justify-end gap-2">
-            <button type="button" id="cancelPassword" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded text-sm">Cancelar</button>
-            <button type="submit" class="btn px-4 py-2 rounded text-sm">Entrar</button>
-        </div>
-      </form>
-    </div>
-  </div>
-  <!-- ========= MODAL DE CONFIRMAÇÃO DE EXCLUSÃO ========= -->
-  <div id="confirmDeleteModal" class="fixed inset-0 z-[1003] bg-black bg-opacity-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded shadow-lg p-6 w-full max-w-sm">
-      <h3 class="text-lg font-bold mb-2 text-red-700">Confirmar Exclusão</h3>
-      <p class="text-sm text-gray-600 mb-4">Você tem certeza que deseja excluir este contrato? Esta ação não pode ser desfeita.</p>
-      <div class="mt-4 flex justify-end gap-2">
-          <button type="button" id="cancelDelete" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded text-sm">Cancelar</button>
-          <button type="button" id="confirmDelete" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">Excluir</button>
-      </div>
-    </div>
-  </div>
-  <!-- ========= MODAL DE COMPARAÇÃO DE DUPLICADOS ========= -->
-  <div id="compareModal" class="fixed inset-0 z-[1002] bg-black bg-opacity-50 flex items-center justify-center hidden p-4">
-    <div class="bg-white rounded shadow-lg p-6 relative w-full modal-inner">
-      <button id="closeCompareModal" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-3xl leading-none" title="Fechar">&times;</button>
-      <h3 class="text-lg font-bold mb-4">Comparar Contratos Duplicados</h3>
-      <div id="compare-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <!-- Colunas de comparação serão inseridas aqui -->
-      </div>
-    </div>
-  </div>
-  <!-- ========= MODAL DE DETALHES E EDIÇÃO ========= -->
-  <div id="modalDetalhes" class="fixed inset-0 z-[1001] bg-black bg-opacity-50 flex items-center justify-center hidden p-4" aria-modal="true" role="dialog">
-    <div class="bg-white rounded shadow-lg modal-inner p-6 relative w-full">
-      <button id="fecharModal" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-3xl leading-none" title="Fechar">&times;</button>
-      <h3 class="text-lg font-bold mb-4" id="modalTitulo"></h3>
-     
-      <div id="modal-display-view">
-          <div id="modalConteudo" class="space-y-2 text-sm"></div>
-          <div class="mt-6 text-right border-t pt-4 space-x-2">
-              <button id="btnExcluirContrato" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold">Excluir</button>
-              <button id="btnEditarContrato" class="btn px-4 py-2 rounded font-semibold">Editar</button>
-          </div>
-      </div>
-      <div id="modal-edit-form" class="hidden">
-          <form id="form-edicao">
-              <div id="form-fields" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm"></div>
-              <div class="mt-6 text-right border-t pt-4 space-x-2">
-                  <button type="button" id="btnCancelarEdicao" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded">Cancelar</button>
-                  <button type="submit" id="btnSalvar" class="btn px-4 py-2 rounded font-semibold">Salvar</button>
-              </div>
-          </form>
-      </div>
-    </div>
-  </div>
-  <footer class="text-center text-gray-500 text-sm py-4">©️ 2025 Dashboard de Contratos</footer>
-<script>
-  // --- VARIÁVEIS GLOBAIS E CONFIGURAÇÃO ---
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwde77NSCugyCeRegATe3n7qPwfVzUqH-WatuX7oJj1l4NfW2mrecnqCZ1EaIo4dVCJ/exec";
-  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0URMfEf9HGcXuuCHgKFRfOEx7t_zR_lSMS7xNiFjPe17ZwH3u5Tw8duT1AwCsktqrY3CA3slAKxVL/pub?output=csv";
-  const ADMIN_PASSWORD = "!C-Fiscon.DmaeADM"; // Senha de administração
-  let contratos = [];
-  let contratosFiltrados = [];
-  let tabela = null;
-  let currentEditingContract = null;
-  let todosCabecalhos = []; // Esta será a lista de chaves JS limpas (ex: 'ValorContrato')
-  let chartSituacao = null, chartAno = null, chartPrazo = null;
-  let termoBuscaUniversal = "";
-  let _onAuthSuccess = null; // Callback de autenticação
-  const fiscaisCFISCON_EXIBIVEL = [ { norm: "CARMEN LUCIA ULGUIM CHAGAS PADOIN", exib: "Carmen Lucia Ulguim Chagas Padoin" }, { norm: "MARCIA BEHEREGARAY ARGOLLO MENDES", exib: "Marcia Beheregaray Argollo Mendes" }, { norm: "MAURICIO LEANDRO BORGES ROSA", exib: "Mauricio Leandro Borges Rosa" }, { norm: "OTAVIO DA SILVA AFONSO", exib: "Otavio da Silva Afonso" }, { norm: "ARIADNE SILVEIRA TUPY ASSU", exib: "Ariadne Silveira Tupy Assu" }, { norm: "FERNANDA DA ROSA PEDERNEIRAS", exib: "Fernanda Da Rosa Pederneiras" }, { norm: "FELIPE PAIVA CURI", exib: "Felipe Paiva Curi" } ];
-  const CRITERIOS_SUGERIDOS = [ { id: 'NProcesso', label: 'N° Processo', checked: true }, { id: 'AnoProcesso', label: 'Ano Processo', checked: true }, { id: 'Contratado', label: 'Contratado', checked: true }, { id: 'CPFCNPJ', label: 'CPF/CNPJ', checked: false }, { id: 'Objeto', label: 'Objeto', checked: true }, { id: 'NContrato', label: 'N° Contrato', checked: false }, { id: 'AnoContrato', label: 'Ano Contrato', checked: false }, { id: 'InicioVigencia', label: 'Início Vigência', checked: false }, ];
- 
-  const colunaMap = { 'rowid': 'RowID', 'instrumento': 'Instrumento', 'n contrato': 'NContrato', 'nº contrato': 'NContrato', 'ano contrato': 'AnoContrato', 'contratado': 'Contratado', 'cpfcnpj': 'CPFCNPJ', 'descricao do objeto': 'DescricaoDoObjeto', 'valor contrato': 'ValorContrato', 'n ter aditivo apostilamento': 'NTerAditivoApostilamento', 'valor com alteracoes': 'ValorComAlteracoes', 'assinatura': 'Assinatura', 'inicio vigencia': 'InicioVigencia', 'final vigencia': 'FinalVigencia', 'situacao': 'Situacao', 'n processo': 'NProcesso', 'nº processo': 'NProcesso', 'ano processo': 'AnoProcesso', 'gestores': 'Gestores', 'natureza objeto': 'NaturezaObjeto', 'objeto': 'Objeto', 'suplentes': 'Suplentes', 'fiscais': 'Fiscais', 'prazo': 'Prazo', 'prazo maximo vigencia': 'PrazoMaximoVigencia', 'prorrogacao prazo': 'ProrogacaoPrazo', 'lei': 'Lei', 'obs': 'OBS' };
-  const jsKeyToOriginalHeaderMap = { 'RowID': 'RowID', 'Instrumento': 'Instrumento', 'NContrato': 'N° Contrato', 'AnoContrato': 'Ano Contrato', 'Contratado': 'Contratado', 'CPFCNPJ': 'CPF/CNPJ', 'DescricaoDoObjeto': 'Descrição do Objeto', 'ValorContrato': 'Valor Contrato', 'NTerAditivoApostilamento': 'Nº Ter. Aditivo Apostilamento', 'ValorComAlteracoes': 'Valor com Alterações', 'Assinatura': 'Assinatura', 'InicioVigencia': 'Início Vigência', 'FinalVigencia': 'Final Vigência', 'Situacao': 'Situação', 'NProcesso': 'N° Processo', 'AnoProcesso': 'Ano Processo', 'Gestores': 'Gestor(es)', 'NaturezaObjeto': 'Natureza Objeto', 'Objeto': 'Objeto', 'Suplentes': 'Suplente(s)', 'Fiscais': 'Fiscal(is)', 'Prazo': 'Prazo', 'PrazoMaximoVigencia': 'Prazo Máximo Vigência', 'ProrogacaoPrazo': 'Prorrogação Prazo', 'Lei': 'Lei', 'OBS': 'OBS:' };
-  // --- FUNÇÕES DE AUTENTICAÇÃO E NOTIFICAÇÃO ---
-  function requestPassword(onSuccessCallback) {
-  	if (sessionStorage.getItem('isAdminAuthenticated') === 'true') {
-  		if(typeof onSuccessCallback === 'function') onSuccessCallback();
-  		return;
-  	}
-  	_onAuthSuccess = onSuccessCallback;
-  	$('#passwordInput').val('');
-  	$('#passwordError').addClass('hidden');
-  	$('#passwordModal').removeClass('hidden');
-  	$('#passwordInput').focus();
-  }
-  function showNotification(message, type = 'success') {
-  	const notification = $('#notification');
-  	$('#notification-message').text(message);
-  	
-  	notification.removeClass('bg-green-500 bg-red-500');
-  	if (type === 'error') {
-  		notification.addClass('bg-red-500');
-  	} else {
-  		notification.addClass('bg-green-500');
-  	}
-  	notification.removeClass('hidden');
-  	setTimeout(() => {
-  		notification.addClass('hidden');
-  	}, 3000); // Oculta após 3 segundos
-  }
-  // --- FUNÇÕES AUXILIARES GERAIS ---
-  function normalizeCol(str) { return (str||'').normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "").replace(/[^a-zA-Z0-9 ]/g, "").toLowerCase(); }
-  function excelSerialToDate(serial) { var utc_days = Math.floor(serial - 25569); var utc_value = utc_days * 86400; var date_info = new Date(utc_value * 1000); return date_info; }
-  function parseDate(dateStr) { if (!dateStr) return null; if (typeof dateStr === 'number' || (!isNaN(dateStr) && String(dateStr).length >= 5 && String(dateStr).length <= 6)) { return excelSerialToDate(Number(dateStr)); } if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) { const [y, m, d] = dateStr.split('-'); return new Date(y, m - 1, d); } if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) { const [d, m, y] = dateStr.split('/'); return new Date(y, m - 1, d); } if (/^\d{2}\/\d{2}\/\d{2}$/.test(dateStr)) { const [d, m, y] = dateStr.split('/'); const ano = Number(y) < 50 ? '20' + y : '19' + y; return new Date(ano, m - 1, d); } let d = new Date(dateStr); return isNaN(d.getTime()) ? null : d; }
-  function formatDateBR(dateStr) { const d = parseDate(dateStr); if (!d) return ""; const day = String(d.getDate()).padStart(2, '0'); const month = String(d.getMonth() + 1).padStart(2, '0'); const year = d.getFullYear(); return `${day}/${month}/${year}`; }
-  function formatCurrencyBR(value) { if (value === null || value === undefined || value === '') return ""; let number = parseFloat(String(value).replace(/[^0-9,-]/g, '').replace(',', '.')); if (isNaN(number)) return ""; return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
-  function showSaving(show = true, text = "Salvando...") { $('#savingText').text(text); $('#savingOverlay').toggleClass('hidden', !show); }
-  function showLoading(show = true, text = "Carregando contratos...") { $('#loadingText').text(text); $('#loadingOverlay').toggleClass('hidden', !show); }
-  function diasAteVencimento(finalVigencia) { let dataFinal = parseDate(finalVigencia); if (!dataFinal) return null; let hoje = new Date(); hoje.setHours(0,0,0,0); return Math.ceil((dataFinal - hoje) / (1000 * 60 * 60 * 24)); }
-  function formatDiasVencimento(finalVigencia) { let dias = diasAteVencimento(finalVigencia); if (dias === null) return ""; if (dias === 0) return "vence hoje"; if (dias === 1) return "vence em 1 dia"; if (dias > 1) return `vence em ${dias} dias`; if (dias < 0) return "vencido"; return ""; }
-  function prazoMeses(inicio, fim) { const d1 = parseDate(inicio); const d2 = parseDate(fim); if (!d1 || !d2) return ""; let months = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()); if (d2.getDate() >= d1.getDate()) { months++; } return months > 0 ? `${months} mês${months > 1 ? 'es' : ''}` : ""; }
-  function limparPrefixoNumero(texto) { return (texto || '').replace(/^\s*\d+\s*[-–—]\s*/g, '').replace(/^\s*\d+\s+/g, '').trim(); }
-  function normalizarNomeFiscal(nome) { if (!nome) return ''; let n = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-–—]/g, " ").replace(/\s+/g, " ").replace(/[^A-Z ]/gi, "").toUpperCase().trim(); n = n.replace(/\bASSU\b/g, "ASSU"); return n; }
-  function agruparSituacao(sit) { if (!sit) return "Não Vigente"; const norm = (sit || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[–—-]/g, "-").replace(/\s+/g, " ").trim().toLowerCase(); if (norm.includes("encerrado")) return "Encerrado"; if (norm.includes("expirado")) return "Expirado"; if (norm.includes("vigente")) return "Vigente"; return "Não Vigente"; }
-  function mapearTipoObjeto(objeto) { if (!objeto) return "Outros Serviços"; const objetoNorm = objeto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); if (objetoNorm.includes("fornecimento") || objetoNorm.includes("material") || objetoNorm.includes("compra")) { return "Compras"; } if (objetoNorm.includes("obra") || objetoNorm.includes("engenharia") || objetoNorm.includes("manutenção") || objetoNorm.includes("construção")) { return "Obras e Serviços de Engenharia"; } if (objetoNorm.includes("serviço") || objetoNorm.includes("locação") || objetoNorm.includes("alienação") || objetoNorm.includes("limpeza")) { return "Outros Serviços"; } return "Outros Serviços"; }
-  function contratoTemFiscalCFISCON(contrato) { return (contrato.Fiscais ?? '').split(/[,;\n]+/).some(f => { const nome = limparPrefixoNumero(f); return fiscaisCFISCON_EXIBIVEL.some(fiscal => fiscal.norm === normalizarNomeFiscal(nome)); }); }
- 
-  // --- LÓGICA DE DADOS, FORMULÁRIOS E UI ---
-  function mostrarFormularioEdicao(contrato) { currentEditingContract = contrato; $('#modalTitulo').text(`Editando Contrato: ${contrato.NContrato || ''}`); preencherFormulario(contrato); }
-  function mostrarFormularioNovoContrato() { currentEditingContract = null; $('#modalTitulo').text('Adicionar Novo Contrato'); const novoContratoVazio = todosCabecalhos.reduce((acc, header) => { acc[header] = ''; return acc; }, {}); preencherFormulario(novoContratoVazio); }
-  function preencherFormulario(contrato) {
-  	const formFields = $('#form-fields');
-  	let html = '';
-  	const camposIgnorados = ['RowID', 'originalIndex'];
-  	todosCabecalhos.forEach(jsKey => {
-  		if (camposIgnorados.includes(jsKey)) return;
-  		const originalHeader = jsKeyToOriginalHeaderMap[jsKey] || jsKey;
-  		const valor = contrato[jsKey] ?? '';
-  		let inputType = 'text';
-  		let inputValue = valor;
-  		let extras = '';
-  		if (['InicioVigencia', 'FinalVigencia', 'Assinatura'].includes(jsKey)) {
-  			inputType = 'date';
-  			const parsed = parseDate(valor);
-  			inputValue = parsed ? new Date(parsed.getTime() - (parsed.getTimezoneOffset() * 60000)).toISOString().split('T')[0] : '';
-  		} else if (['ValorContrato', 'ValorComAlteracoes'].includes(jsKey)) {
-  			inputType = 'text'; // CORREÇÃO: Usar texto para aceitar vírgula
-  			extras = 'placeholder="Ex: 20252,85"';
-  			let numericValue = parseFloat(String(valor).replace(',', '.'));
-  			inputValue = isNaN(numericValue) ? '' : numericValue.toString().replace('.', ','); // Mostra com vírgula no form
-  		} else if (jsKey === 'Prazo') {
-  			extras = 'readonly placeholder="Calculado automaticamente"';
-  			inputValue = prazoMeses(contrato.InicioVigencia, contrato.FinalVigencia);
-  		}
-  		html += `<div><label for="edit-${jsKey}" class="block text-xs font-medium text-gray-700 mb-1">${originalHeader}</label><input type="${inputType}" id="edit-${jsKey}" name="${jsKey}" value="${inputValue}" class="form-input" ${extras}></div>`;
-  	});
-  	formFields.html(html);
-  	$('#modal-display-view').addClass('hidden');
-  	$('#modal-edit-form').removeClass('hidden');
-  	$('#modalDetalhes').removeClass('hidden');
-  }
-  function salvarAlteracoes(event) {
-  	event.preventDefault();
-  	showSaving(true);
-  	const formData = new FormData(event.target);
-  	const dataFromForm = Object.fromEntries(formData.entries());
-  	// CORREÇÃO: "Limpa" os valores de moeda antes de enviar
-  	const currencyFields = ['ValorContrato', 'ValorComAlteracoes'];
-  	currencyFields.forEach(jsKey => {
-  		if (dataFromForm[jsKey]) {
-  			// Remove pontos de milhar, depois troca a vírgula decimal por ponto
-  			dataFromForm[jsKey] = dataFromForm[jsKey].replace(/\./g, '').replace(',', '.');
-  		}
-  	});
-  	// Traduz as chaves JS de volta para os nomes originais das colunas
-  	const dataParaEnviar = {};
-  	for (const jsKey in dataFromForm) {
-  		const originalKey = jsKeyToOriginalHeaderMap[jsKey];
-  		if (originalKey) {
-  			dataParaEnviar[originalKey] = dataFromForm[jsKey];
-  		}
-  	}
-  	
-  	// Calcula o prazo automaticamente
-  	if (dataFromForm.InicioVigencia && dataFromForm.FinalVigencia) {
-  		dataParaEnviar['Prazo'] = prazoMeses(dataFromForm.InicioVigencia, dataFromForm.FinalVigencia);
-  	}
-  	// Reformatar datas de YYYY-MM-DD para DD/MM/YYYY para a planilha
-  	const dateFieldsJsKeys = ['InicioVigencia', 'FinalVigencia', 'Assinatura'];
-  	dateFieldsJsKeys.forEach(jsKey => {
-  		const originalKey = jsKeyToOriginalHeaderMap[jsKey];
-  		if (originalKey && dataParaEnviar[originalKey] && /^\d{4}-\d{2}-\d{2}$/.test(dataParaEnviar[originalKey])) {
-  			const [y, m, d] = dataParaEnviar[originalKey].split('-');
-  			dataParaEnviar[originalKey] = `${d}/${m}/${y}`;
-  		}
-  	});
-  	const isNew = currentEditingContract === null;
-  	const payload = { action: isNew ? 'create' : 'update', data: dataParaEnviar };
-  	if (!isNew) { payload.rowId = currentEditingContract.RowID; }
-  	fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
-  	.catch(console.error);
-  	setTimeout(() => {
-  		$('#modalDetalhes').addClass('hidden');
-  		showSaving(false);
-  		showNotification('Solicitação enviada! A planilha será atualizada.');
-  		setTimeout(carregarContratosPlanilha, 2000);
-  	}, 1500);
-  }
-   function solicitarExclusao() {
-  	requestPassword(() => {
-  		$('#confirmDeleteModal').removeClass('hidden');
-  	});
-  }
-  function excluirContrato() {
-  	if (!currentEditingContract || !currentEditingContract.RowID) {
-  		showNotification("Erro: Contrato inválido ou RowID não encontrado.", 'error');
-  		return;
-  	}
-  	showSaving(true, "Excluindo...");
-  	const payload = {
-  		action: 'delete',
-  		rowId: currentEditingContract.RowID
-  	};
-  	fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
-  	.catch(console.error);
-  	// Otimista: remove da UI imediatamente
-  	setTimeout(() => {
-  		$('#modalDetalhes').addClass('hidden');
-  		$('#confirmDeleteModal').addClass('hidden');
-  		$('#compareModal').addClass('hidden');
-  		const index = contratos.findIndex(c => c.originalIndex === currentEditingContract.originalIndex);
-  		if (index > -1) {
-  			contratos.splice(index, 1);
-  		}
-  		aplicarFiltros();
-  		if ($('#navDuplicados').hasClass('active')) {
-  			verificarDuplicados();
-  		}
-  		
-  		showSaving(false);
-  		showNotification('Contrato excluído com sucesso!');
-  	}, 1000);
-  }
-  function processData(data, headers) {
-  	const validData = data.filter(row => row.RowID && row.RowID.trim() !== '');
-  	
-  	todosCabecalhos = [];
-  	const seenJsKeys = new Set();
-  	headers.forEach(originalHeader => {
-  		const normalized = normalizeCol(originalHeader);
-  		const jsKey = colunaMap[normalized] || originalHeader.trim().replace(/[^a-zA-Z0-9]/g, '');
-  		if (!seenJsKeys.has(jsKey)) {
-  			todosCabecalhos.push(jsKey);
-  			seenJsKeys.add(jsKey);
-  		}
-  	});
-  	contratos = validData.map((row, index) => {
-  		let obj = { originalIndex: index };
-  		headers.forEach(header => {
-  			const normalized = normalizeCol(header);
-  			const jsKey = colunaMap[normalized] || header.trim().replace(/[^a-zA-Z0-9]/g, '');
-  			obj[jsKey] = row[header] ? String(row[header]).trim() : row[header];
-  		});
-  		
-  		const grupoSituacaoPlanilha = agruparSituacao(obj.Situacao);
+  <div id="loadingOverlay" class="hidden">
+    <div>
+      <div class="spinner mx-auto"></div>
+      <div id="loadingText" class="text-[#1E4069] text-lg mt-3 text-center font-bold">Carregando contratos...</div>
+    </div>
+  </div>
+   <div id="savingOverlay" class="hidden">
+    <div>
+      <div class="spinner mx-auto"></div>
+      <div id="savingText" class="text-[#1E4069] text-lg mt-3 text-center font-bold">Salvando...</div>
+    </div>
+  </div>
 
-  		if (grupoSituacaoPlanilha !== 'Encerrado') {
-  			const dias = diasAteVencimento(obj.FinalVigencia);
-  			if (dias !== null) {
-  				if (dias < 0) {
-  					obj.Situacao = 'Expirado';
-  				} else {
-  					obj.Situacao = 'Vigente';
-  				}
-  			}
-  		}
-  		
-  		return obj;
-  	});
-  	contratosFiltrados = [...contratos];
-  	atualizarFiltros();
-  	aplicarFiltros();
-  }
-  function carregarContratosPlanilha() { showLoading(true); const url = `${SHEET_CSV_URL}&t=${new Date().getTime()}`; Papa.parse(url, { download: true, header: true, skipEmptyLines: true, complete: results => { if (results.data && results.data.length > 0) { processData(results.data, results.meta.fields); } else { showNotification('Não foi possível carregar dados da planilha.', 'error'); } showLoading(false); }, error: err => { showLoading(false); showNotification('Erro ao carregar dados da planilha!', 'error'); console.error(err); } }); }
-  // --- FILTROS E LÓGICA DA TABELA PRINCIPAL ---
-  function aplicarFiltros() {
-  	const ano = $('#filtroAnoContrato').val();
-    const vig = $('#filtroFinalVigencia').val();
-    const tipoObjeto = $('#filtroTipoObjeto').val();
-    const fiscal = $('#filtroFiscal').val();
-    const situacao = $('#filtroSituacao').val();
-   
-    const normalizeSearch = (str) => (str || '').toString().toLowerCase().replace(/[.\-\/]/g, '');
-    const termoNormalizado = normalizeSearch(termoBuscaUniversal);
-    contratosFiltrados = contratos.filter(c => {
-        if (termoBuscaUniversal && !Object.values(c).some(val => normalizeSearch(val).includes(termoNormalizado))) return false;
-        if (ano && String(c.AnoContrato ?? '') !== ano) return false;
-        if (tipoObjeto && mapearTipoObjeto(c.Objeto) !== tipoObjeto) return false;
-        if (fiscal && !(c.Fiscais ?? '').split(/[,;\n]+/).map(f => limparPrefixoNumero(f).trim()).includes(fiscal)) return false;
-        if (situacao && agruparSituacao(c.Situacao) !== situacao) return false;
-        if (vig) { let dias = diasAteVencimento(c.FinalVigencia); if (dias === null || dias < 0 || dias > Number(vig)) return false; }
-        return true;
-    });
-    atualizarTabela();
-    atualizarAvisosVencimento();
-    renderPainelFiscaisCFISCON();
-    desenharGraficos();
-  }
-  function fillSelectOptions(selectId, array, field, multiSplit = false) { const select = $(`#${selectId}`); const seen = new Set(); array.forEach(item => { let values = multiSplit ? (item[field] ?? '').split(/[,;\n]+/) : [item[field]]; values.forEach(v => { const cleaned = multiSplit ? limparPrefixoNumero(v).trim() : String(v).trim(); if (cleaned) seen.add(cleaned); }); }); const options = Array.from(seen).sort((a,b) => a.localeCompare(b)); select.html('<option value="">Todos</option>' + options.map(o => `<option value="${o}">${o}</option>`).join('')); }
-  function fillSelectOptionsSituacao(selectId, array) { const select = $(`#${selectId}`); const seen = new Set(); array.forEach(c => { const grp = agruparSituacao(c.Situacao); if (grp) seen.add(grp); }); const values = ["Vigente", "Expirado", "Encerrado", "Não Vigente"].filter(v => seen.has(v)); select.html('<option value="">Todas</option>' + values.map(val => `<option value="${val}">${val}</option>`).join('')); }
-  function atualizarFiltros() { fillSelectOptions('filtroAnoContrato', contratos, 'AnoContrato'); fillSelectOptions('filtroFiscal', contratos, 'Fiscais', true); fillSelectOptionsSituacao('filtroSituacao', contratos); }
-  function atualizarTabela() { const columns = [ { title: "N° Contrato", data: "NContrato" }, { title: "Ano", data: "AnoContrato" }, { title: "Contratado", data: "Contratado" }, { title: "Final Vigência", data: "FinalVigencia", render: (data) => formatDateBR(data) }, { title: "Vence em", data: "FinalVigencia", render: (data) => formatDiasVencimento(data) }, { title: "Situação", data: "Situacao" }, { title: "", data: null, orderable: false, render: (data, type, row) => `<button class="ver-detalhes btn text-xs px-2 py-1 rounded" data-idx="${row.originalIndex}">Detalhes</button>` } ]; if ($.fn.DataTable.isDataTable('#tabelaContratos')) { tabela.clear().rows.add(contratosFiltrados).draw(); } else { tabela = $('#tabelaContratos').DataTable({ data: contratosFiltrados, columns: columns, pageLength: 10, lengthMenu: [10, 25, 50, 100], language: { url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json" }, createdRow: function(row, data) { let dias = diasAteVencimento(data.FinalVigencia); if (dias !== null && dias >= 0 && dias < 30) { $(row).css('background-color', '#FFCCCC'); } else if (dias !== null && dias >= 30 && dias < 60) { $(row).css('background-color', '#FFF9CC'); } else if (dias !== null && dias >= 60) { $(row).css('background-color', '#D1FFD1'); } if (contratoTemFiscalCFISCON(data)) { $(row).css('font-weight', 'bold').css('border-left', '4px solid #1E4069'); } } }); } }
-  function mostrarDetalhesContrato(contrato) {
-  	currentEditingContract = contrato;
-  	let html = `<table class="min-w-full text-left border border-gray-200 text-xs"><tbody>`;
-  	
-  	todosCabecalhos.forEach(jsKey => {
-  		const originalHeader = jsKeyToOriginalHeaderMap[jsKey] || jsKey;
-  		const v = contrato[jsKey];
-  		if (jsKey === 'originalIndex') return;
-  		let displayValue = v;
-  		if (['FinalVigencia', 'InicioVigencia', 'Assinatura'].includes(jsKey)) {
-  			displayValue = formatDateBR(v);
-  		} else if (['ValorContrato', 'ValorComAlteracoes'].includes(jsKey)) {
-  			displayValue = formatCurrencyBR(v);
-  		}
-  		html += `<tr class="border-b"><th class="py-1 px-2 bg-gray-100 font-semibold w-40">${originalHeader}</th><td class="py-1 px-2">${displayValue ?? ''}</td></tr>`;
-  	});
-  	html += `<tr><th class="py-1 px-2 bg-gray-100 font-semibold w-40">Prazo Calculado</th><td class="py-1 px-2">${prazoMeses(contrato.InicioVigencia, contrato.FinalVigencia)}</td></tr>`;
-  	html += `</tbody></table>`;
-  	$('#modalTitulo').text(`Detalhes do Contrato: ${contrato.NContrato || ''}`);
-  	$('#modalConteudo').html(html);
-  	$('#modal-edit-form').addClass('hidden');
-  	$('#modal-display-view').removeClass('hidden');
-  	$('#modalDetalhes').removeClass('hidden');
-  }
- 
-  // --- PAINEL C-FISCON E AVISOS ---
-  function renderPainelFiscaisCFISCON() { let html = `<div class="mb-6 p-4 bg-[#E6ECEF] border-l-4 border-[#1E4069] rounded shadow"><strong>Contratos C-FISCON:</strong><div class="flex flex-wrap gap-2 mt-2">`; fiscaisCFISCON_EXIBIVEL.forEach(obj => { html += `<button class="btn-fiscal-cfiscon bg-[#1E4069] hover:bg-[#4DA8DA] text-white px-3 py-1 rounded text-xs font-semibold" data-nome="${obj.norm}">${obj.exib}</button>`; }); html += `</div><div id="cfiscon-contratos-lista" class="mt-4 hidden"></div></div>`; $('#painelFiscaisCFISCON').html(html); }
-  function mostrarContratosFiscalCFISCON(normFiscal) {
-  	const contratosDoFiscal = contratos.filter(c => (c.Fiscais ?? '').split(/[,;\n]+/).some(f => normalizarNomeFiscal(limparPrefixoNumero(f)) === normFiscal));
-  	let html = `<div class="mb-2"><span class="font-bold text-[#1E4069]">${(fiscaisCFISCON_EXIBIVEL.find(f => f.norm === normFiscal) || {}).exib || normFiscal}</span><button class="ml-4 px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 close-cfiscon-contratos" title="Fechar">Fechar</button></div>`;
-  	if (contratosDoFiscal.length === 0) {
-  		html += `<div>Nenhum contrato encontrado para este fiscal.</div>`;
-  	} else {
-  		html += `<div class="overflow-x-auto"><table class="min-w-full text-xs border rounded mini-table"><thead class="bg-[#E6ECEF]"><tr><th class="px-2 py-1">N° Contrato</th><th class="px-2 py-1">Contratado</th><th class="px-2 py-1">Final Vigência</th><th class="px-2 py-1">Vence em</th><th class="px-2 py-1"></th></tr></thead><tbody>`;
-  		contratosDoFiscal.forEach(c => {
-  			let dias = diasAteVencimento(c.FinalVigencia);
-  			let bgColor = '';
-  			if (dias !== null && dias >= 0 && dias < 30) {
-  				bgColor = 'background-color:#FFCCCC;';
-  			} else if (dias !== null && dias >= 30 && dias < 60) {
-  				bgColor = 'background-color:#FFF9CC;';
-  			} else if (dias !== null && dias >= 60) {
-  				bgColor = 'background-color:#D1FFD1;';
-  			}
-  			html += `<tr style="${bgColor}">
-  				<td class="px-2 py-1">${c.NContrato || ''}</td>
-  				<td class="px-2 py-1">${c.Contratado || ''}</td>
-  				<td class="px-2 py-1">${formatDateBR(c.FinalVigencia) || ''}</td>
-  				<td class="px-2 py-1">${formatDiasVencimento(c.FinalVigencia)}</td>
-  				<td class="px-2 py-1 text-center"><button class="ver-detalhes-mini btn text-xs px-2 py-1 rounded" data-idx="${c.originalIndex}" title="Ver detalhes">Detalhes</button></td>
-  			</tr>`;
-  		});
-  		html += `</tbody></table></div>`;
-  	}
-  	const listaDiv = $('#cfiscon-contratos-lista');
-  	listaDiv.html(html).removeClass('hidden');
-  }
-  function atualizarAvisosVencimento() { let html = ''; const vencendo30 = contratosFiltrados.filter(c => { let dias = diasAteVencimento(c.FinalVigencia); return dias !== null && dias >= 0 && dias < 30; }); const vencendo60 = contratosFiltrados.filter(c => { let dias = diasAteVencimento(c.FinalVigencia); return dias !== null && dias >= 30 && dias < 60; }); html += renderAvisoComMiniTabela("Atenção", "red", vencendo30, "contratos-ate30", "Ver todos os contratos vencendo em até 30 dias"); html += renderAvisoComMiniTabela("Alerta", "yellow", vencendo60, "contratos-ate60", "Ver todos os contratos vencendo em até 60 dias"); $('#avisosVencimento').html(html); }
-  function renderAvisoComMiniTabela(titulo, cor, lista, boxId, labelBtn) { if (!lista.length) return ''; let corAviso, corHead; if (cor === 'red') { corAviso = 'bg-red-100 border-red-500 text-red-700'; corHead = 'bg-red-200'; } else { corAviso = 'bg-yellow-100 border-yellow-500 text-yellow-700'; corHead = 'bg-yellow-200'; } let ordenados = [...lista].sort((a, b) => diasAteVencimento(a.FinalVigencia) - diasAteVencimento(b.FinalVigencia)); const criarTabelaHTML = (contratosParaRender) => `<div class="overflow-x-auto mb-2"><table class="mini-table min-w-full text-xs border rounded"><thead class="${corHead}"><tr><th class="px-2 py-1">N° Contrato</th><th class="px-2 py-1">Contratado</th><th class="px-2 py-1">Final Vigência</th><th class="px-2 py-1">Vence em</th><th class="px-2 py-1"></th></tr></thead><tbody>${contratosParaRender.map(c => `<tr ${contratoTemFiscalCFISCON(c) ? 'style="font-weight:bold;border-left:4px solid #1E4069;"' : ''}><td class="px-2 py-1">${c.NContrato || ''}</td><td class="px-2 py-1">${c.Contratado || ''}</td><td class="px-2 py-1">${formatDateBR(c.FinalVigencia)}</td><td class="px-2 py-1">${formatDiasVencimento(c.FinalVigencia)}</td><td class="px-2 py-1 text-center"><button class="ver-detalhes-mini btn text-xs px-2 py-1 rounded" data-idx="${c.originalIndex}">Detalhes</button></td></tr>`).join('')}</tbody></table></div>`; return `<div class="p-4 mb-2 ${corAviso} border-l-4 rounded"><strong>${titulo}:</strong> ${lista.length} contrato(s) vencendo em até <b>${cor === 'red' ? '30' : '60'} dias</b>.</div><div id="${boxId}-mini">${criarTabelaHTML(ordenados.slice(0, 5))}${lista.length > 5 ? `<div class="text-center"><button class="ver-mais-mini bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs" data-box="${boxId}">${labelBtn}</button></div>` : ''}</div><div id="${boxId}-full" class="hidden">${criarTabelaHTML(ordenados)}<div class="text-center"><button class="ver-menos-mini bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs" data-box="${boxId}">Ver menos</button></div></div>`; }
-  // --- GRÁFICOS E DUPLICADOS ---
-  function desenharGraficos() {
-  	if (typeof Chart === 'undefined') return;
-  	const situacoes = {};
-  	contratosFiltrados.forEach(c => {
-  		const grupo = agruparSituacao(c.Situacao);
-  		if (grupo) situacoes[grupo] = (situacoes[grupo] || 0) + 1;
-  	});
-  	const sitLabels = ["Vigente", "Expirado", "Encerrado", "Não Vigente"];
-  	const sitData = sitLabels.map(label => situacoes[label] || 0);
-  	if (chartSituacao) chartSituacao.destroy();
-  	chartSituacao = new Chart($('#graficoSituacao'), {
-  		type: 'pie',
-  		data: {
-  			labels: sitLabels,
-  			datasets: [{ data: sitData, backgroundColor: ['#1E4069', '#F4A261', '#E63946', '#4DA8DA'] }]
-  		},
-  		options: { responsive: true, plugins: { legend: { position: 'bottom' }, datalabels: { color: '#fff', font: { weight: 'bold' } } } }
-  	});
-  	const anos = {};
-  	contratosFiltrados.forEach(c => {
-  		if (c.AnoContrato) anos[c.AnoContrato] = (anos[c.AnoContrato] || 0) + 1;
-  	});
-  	const anoLabels = Object.keys(anos).sort();
-  	const anoData = anoLabels.map(a => anos[a]);
-  	if (chartAno) chartAno.destroy();
-  	chartAno = new Chart($('#graficoAno'), {
-  		type: 'bar',
-  		data: {
-  			labels: anoLabels,
-  			datasets: [{ label: 'Contratos', data: anoData, backgroundColor: '#1E4069' }]
-  		},
-  		options: { responsive: true, plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold' } } } }
-  	});
-  	const faixas = [{ label: 'Até 6 meses', min: 0, max: 6 }, { label: '7 a 12 meses', min: 7, max: 12 }, { label: '13 a 24 meses', min: 13, max: 24 }, { label: '25 a 36 meses', min: 25, max: 36 }, { label: 'Acima de 36 meses', min: 37, max: 999 }];
-  	const prazos = [0, 0, 0, 0, 0];
-  	contratosFiltrados.forEach(c => {
-  		let months = prazoMeses(c.InicioVigencia, c.FinalVigencia).replace(/[^0-9]/g, '');
-  		if (months) {
-  			for (let i = 0; i < faixas.length; i++) {
-  				if (months >= faixas[i].min && months <= faixas[i].max) {
-  					prazos[i]++;
-  					break;
-  				}
-  			}
-  		}
-  	});
-  	if (chartPrazo) chartPrazo.destroy();
-  	chartPrazo = new Chart($('#graficoPrazo'), {
-  		type: 'doughnut',
-  		data: {
-  			labels: faixas.map(f => f.label),
-  			datasets: [{ data: prazos, backgroundColor: ['#1E4069', '#4DA8DA', '#00A651', '#F4A261', '#0078A8'] }]
-  		},
-  		options: { responsive: true, plugins: { legend: { position: 'bottom' }, datalabels: { color: '#fff', font: { weight: 'bold' } } } }
-  	});
-  }
-  function renderizarCriterios() { const container = $('#criterios-selecao'); container.html(CRITERIOS_SUGERIDOS.map(c => `<label class="flex items-center space-x-2 p-2 rounded hover:bg-gray-100 cursor-pointer"><input type="checkbox" name="criterio" value="${c.id}" class="h-4 w-4 rounded border-gray-300 text-[#1E4069] focus:ring-[#1E4069]" ${c.checked ? 'checked' : ''}><span class="text-sm font-medium text-gray-700">${c.label}</span></label>`).join('')); }
-  function verificarDuplicados() { const criteriosSelecionados = Array.from($('input[name="criterio"]:checked')).map(cb => cb.value); if (criteriosSelecionados.length === 0) { showNotification('Selecione pelo menos um critério.', 'error'); return; } showLoading(true, "Verificando..."); const grupos = new Map(); contratos.forEach((contrato) => { const chave = criteriosSelecionados.map(criterio => (contrato[criterio] || '').toString().trim().toLowerCase()).join('||'); if (!chave) return; if (!grupos.has(chave)) grupos.set(chave, []); grupos.get(chave).push(contrato); }); const duplicados = Array.from(grupos.values()).filter(grupo => grupo.length > 1); setTimeout(() => { renderizarResultados(duplicados); showLoading(false); }, 500); }
-  function renderizarResultados(grupos) {
-  	const container = $('#resultados-conteudo');
-  	if (grupos.length === 0) {
-  		container.html(`<div class="text-center py-8"><h3 class="mt-2 text-lg font-medium text-gray-900">Nenhum duplicado encontrado!</h3></div>`);
-  		return;
-  	}
-  	let html = `<p class="text-left text-sm text-gray-600 mb-4">Encontrados <strong>${grupos.length}</strong> grupos de contratos duplicados.</p>`;
-  	grupos.forEach((grupo, index) => {
-  		html += `<div class="border rounded-lg shadow-sm mb-6 overflow-hidden">
-  			<div class="bg-gray-50 p-3 border-b flex justify-between items-center">
-  				<div>
-  					<h4 class="font-bold text-md text-[#1E4069]">${grupo[0].Contratado || `Grupo ${index + 1}`} (${grupo.length} ocorrências)</h4>
-  					<p class="text-xs text-gray-500">N° Contrato: ${grupo[0].NContrato || 'N/A'}</p>
-  				</div>
-  				<button class="comparar-duplicados btn text-xs px-3 py-1 rounded" data-indices='${JSON.stringify(grupo.map(c => c.originalIndex))}'>Comparar</button>
-  			</div>
-  		</div>`;
-  	});
-  	container.html(html);
-  }
-  function mostrarComparacao(indices) {
-  	const container = $('#compare-container');
-  	container.html(''); // Limpa o container
-  	const contratosParaComparar = indices.map(idx => contratos.find(c => c.originalIndex === idx));
-  	if (contratosParaComparar.length < 2) return; // Precisa de pelo menos 2 para comparar
-  	const contrato1 = contratosParaComparar[0];
-  	const contrato2 = contratosParaComparar[1];
-  	
-  	let htmlCol1 = '<div class="border rounded p-4">';
-  	let htmlCol2 = '<div class="border rounded p-4">';
-  	htmlCol1 += `<h4 class="font-bold mb-2 border-b pb-2">Contrato 1 (RowID: ${contrato1.RowID})</h4><table class="w-full text-xs"><tbody>`;
-  	htmlCol2 += `<h4 class="font-bold mb-2 border-b pb-2">Contrato 2 (RowID: ${contrato2.RowID})</h4><table class="w-full text-xs"><tbody>`;
-  	todosCabecalhos.forEach(jsKey => {
-  		if (jsKey === 'originalIndex') return;
-  		const originalHeader = jsKeyToOriginalHeaderMap[jsKey] || jsKey;
-  		const val1 = contrato1[jsKey] || '';
-  		const val2 = contrato2[jsKey] || '';
-  		const diferenca = val1 !== val2 ? 'diferente' : '';
-  		
-  		let displayVal1 = ['FinalVigencia', 'InicioVigencia', 'Assinatura'].includes(jsKey) ? formatDateBR(val1) : val1;
-  		let displayVal2 = ['FinalVigencia', 'InicioVigencia', 'Assinatura'].includes(jsKey) ? formatDateBR(val2) : val2;
-  		htmlCol1 += `<tr class="${diferenca}"><th class="font-semibold p-1 align-top w-1/3">${originalHeader}</th><td class="p-1">${displayVal1}</td></tr>`;
-  		htmlCol2 += `<tr class="${diferenca}"><th class="font-semibold p-1 align-top w-1/3">${originalHeader}</th><td class="p-1">${displayVal2}</td></tr>`;
-  	});
-  	htmlCol1 += `</tbody></table><div class="text-right mt-4"><button class="excluir-comparado bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded" data-idx="${contrato1.originalIndex}">Excluir Este</button></div></div>`;
-  	htmlCol2 += `</tbody></table><div class="text-right mt-4"><button class="excluir-comparado bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded" data-idx="${contrato2.originalIndex}">Excluir Este</button></div></div>`;
-  	container.html(htmlCol1 + htmlCol2);
-  	$('#compareModal').removeClass('hidden');
-  }
-  // --- INICIALIZAÇÃO ---
-  $(document).ready(function() {
-  	// CORREÇÃO: Registra o plugin do Chart.js uma única vez quando o documento está pronto.
-  	if (typeof Chart !== 'undefined') {
-  		Chart.register(ChartDataLabels);
-  	}
-  	function switchTab(activeTab) {
-  		$('.nav-btn').removeClass('active').removeAttr('aria-current');
-  		$(`#${activeTab}`).addClass('active').attr('aria-current', 'page');
-  		$('main > div').addClass('hidden');
-  		if (activeTab === 'navTabela') $('#painelTabela').removeClass('hidden');
-  		else if (activeTab === 'navGraficos') $('#painelGraficos').removeClass('hidden');
-  		else if (activeTab === 'navDuplicados') $('#painelDuplicados').removeClass('hidden');
-  	}
-  	// Navegação
-  	$('#navTabela').on('click', () => switchTab('navTabela'));
-  	$('#navGraficos').on('click', () => switchTab('navGraficos'));
-  	$('#navDuplicados').on('click', () => switchTab('navDuplicados'));
-  	
-  	// Controles principais
-  	$('#buscaUniversal').on('input', function() { termoBuscaUniversal = this.value.trim(); aplicarFiltros(); });
-  	$('#filtros select').on('change', aplicarFiltros);
-  	$('#limparFiltros').on('click', () => { $('#filtros select').val(''); termoBuscaUniversal = ''; $('#buscaUniversal').val(''); aplicarFiltros(); });
-  	
-  	// Botões com autenticação
-  	$('#btnNovoContrato').on('click', () => { requestPassword(mostrarFormularioNovoContrato); });
-  	$('body').on('click', '#btnEditarContrato', () => { requestPassword(() => mostrarFormularioEdicao(currentEditingContract)); });
-  	$('body').on('click', '#btnExcluirContrato', solicitarExclusao);
-  	// Modal de Senha
-  	$('#passwordForm').on('submit', function(event) { event.preventDefault(); const password = $('#passwordInput').val(); if (password === ADMIN_PASSWORD) { sessionStorage.setItem('isAdminAuthenticated', 'true'); $('#passwordModal').addClass('hidden'); if (typeof _onAuthSuccess === 'function') { _onAuthSuccess(); } _onAuthSuccess = null; } else { $('#passwordError').removeClass('hidden'); } });
-  	$('#cancelPassword').on('click', () => $('#passwordModal').addClass('hidden'));
-  	// Modal de Confirmação de Exclusão
-  	$('#cancelDelete').on('click', () => $('#confirmDeleteModal').addClass('hidden'));
-  	$('#confirmDelete').on('click', excluirContrato);
-  	// Modal de Comparação
-  	$('body').on('click', '.comparar-duplicados', function() { const indices = JSON.parse($(this).attr('data-indices')); mostrarComparacao(indices); });
-  	$('#closeCompareModal').on('click', () => $('#compareModal').addClass('hidden'));
-  	$('body').on('click', '.excluir-comparado', function() {
-  		const idx = $(this).data('idx');
-  		currentEditingContract = contratos.find(c => c.originalIndex === idx);
-  		solicitarExclusao();
-  	});
-  	// Modal de Edição/Detalhes
-  	$('#form-edicao').on('submit', salvarAlteracoes);
-  	$('#btnCancelarEdicao').on('click', () => { if (currentEditingContract) { $('#modal-display-view').removeClass('hidden'); $('#modal-edit-form').addClass('hidden'); } else { $('#modalDetalhes').addClass('hidden'); } });
-  	$('#fecharModal').on('click', () => $('#modalDetalhes').addClass('hidden'));
-  	
-  	// Duplicados
-  	renderizarCriterios();
-  	$('#verificarDuplicados').on('click', verificarDuplicados);
-  	// Eventos delegados para conteúdo dinâmico
-  	$('body').on('click', '.ver-detalhes, .ver-detalhes-mini, .ver-detalhes-duplicados', function() { let idx = $(this).data('idx'); mostrarDetalhesContrato(contratos.find(c => c.originalIndex === idx)); });
-  	$('body').on('click', '.btn-fiscal-cfiscon', function() { const nome = $(this).data('nome'); mostrarContratosFiscalCFISCON(nome); });
-  	$('body').on('click', '.close-cfiscon-contratos', () => $('#cfiscon-contratos-lista').addClass('hidden'));
-  	$('body').on('click', '.ver-mais-mini', function() { const boxId = $(this).data('box'); $(`#${boxId}-mini`).addClass('hidden'); $(`#${boxId}-full`).removeClass('hidden'); });
-  	$('body').on('click', '.ver-menos-mini', function() { const boxId = $(this).data('box'); $(`#${boxId}-mini`).removeClass('hidden'); $(`#${boxId}-full`).addClass('hidden'); });
-  	carregarContratosPlanilha();
-  });
+  <!-- Container de Notificação -->
+  <div id="notification" class="hidden fixed top-5 right-5 z-[2000] p-4 rounded-lg shadow-lg text-white">
+    <span id="notification-message"></span>
+  </div>
+
+  <header class="bg-[#1E4069] text-white p-4 shadow flex items-center justify-between flex-wrap gap-2">
+    <h1 class="text-2xl font-bold">Dashboard de Análise de Contratos</h1>
+    <div class="flex items-center gap-2">
+      <button id="navTabela" class="nav-btn rounded px-4 py-2 font-medium active" type="button">Tabela</button>
+      <button id="navGraficos" class="nav-btn rounded px-4 py-2 font-medium" type="button">Gráficos</button>
+      <button id="navDuplicados" class="nav-btn rounded px-4 py-2 font-medium" type="button">Contratos Duplicados</button>
+    </div>
+  </header>
+
+  <main class="flex-1 p-6">
+    <!-- ========= PAINEL TABELA (PRINCIPAL) ========= -->
+    <div id="painelTabela">
+      <div id="painelFiscaisCFISCON"></div>
+      <section id="avisosVencimento" class="mb-6"></section>
+      <section class="bg-white p-6 rounded shadow mb-6">
+        <div class="mb-4">
+          <label for="buscaUniversal" class="block text-sm font-semibold mb-1">Busca Universal</label>
+          <input type="text" id="buscaUniversal" placeholder="Digite nome, CNPJ, objeto, número do contrato ou qualquer termo..." class="w-full max-w-md p-2 border rounded">
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4" id="filtros">
+           <div>
+             <label class="block text-sm font-semibold mb-1">Ano do Contrato</label>
+             <select id="filtroAnoContrato" class="w-full border rounded px-2 py-1"></select>
+           </div>
+           <div>
+             <label class="block text-sm font-semibold mb-1">Final Vigência</label>
+             <select id="filtroFinalVigencia" class="w-full border rounded px-2 py-1">
+               <option value="">Todas</option>
+               <option value="30">Vencem em até 30 dias</option>
+               <option value="60">Vencem em até 60 dias</option>
+               <option value="90">Vencem em até 90 dias</option>
+               <option value="120">Vencem em até 120 dias</option>
+               <option value="150">Vencem em até 150 dias</option>
+               <option value="180">Vencem em até 180 dias</option>
+             </select>
+           </div>
+           <div>
+             <label class="block text-sm font-semibold mb-1">Tipo de Objeto</label>
+             <select id="filtroTipoObjeto" class="w-full border rounded px-2 py-1">
+               <option value="">Todos</option>
+               <option value="Compras">Compras</option>
+               <option value="Outros Serviços">Outros Serviços</option>
+               <option value="Obras e Serviços de Engenharia">Obras e Serviços de Engenharia</option>
+             </select>
+           </div>
+           <div>
+             <label class="block text-sm font-semibold mb-1">Fiscal(is)</label>
+             <select id="filtroFiscal" class="w-full border rounded px-2 py-1"></select>
+           </div>
+           <div>
+             <label class="block text-sm font-semibold mb-1">Situação</label>
+             <select id="filtroSituacao" class="w-full border rounded px-2 py-1"></select>
+           </div>
+        </div>
+        <div class="mt-4">
+          <button id="limparFiltros" class="bg-[#E6ECEF] hover:bg-[#4DA8DA] text-[#333333] px-4 py-2 rounded">Limpar Filtros</button>
+        </div>
+      </section>
+      <section class="bg-white p-6 rounded shadow">
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-lg font-bold">Tabela de Contratos</h2>
+          <button id="btnNovoContrato" class="btn px-4 py-2 rounded font-semibold text-sm">Adicionar Novo Contrato</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table id="tabelaContratos" class="display w-full"></table>
+        </div>
+      </section>
+    </div>
+    
+    <!-- Painel Gráficos -->
+    <div id="painelGraficos" class="hidden"> 
+        <section class="bg-white p-6 rounded shadow mb-6">
+            <h2 class="text-lg font-bold mb-4">Gráficos</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              <div>
+                <h3 class="font-semibold mb-2 text-sm text-gray-700">Situação dos Contratos</h3>
+                <canvas id="graficoSituacao"></canvas>
+              </div>
+              <div>
+                <h3 class="font-semibold mb-2 text-sm text-gray-700">Contratos por Ano</h3>
+                <canvas id="graficoAno"></canvas>
+              </div>
+              <div>
+                <h3 class="font-semibold mb-2 text-sm font-bold text-gray-700">Prazos dos Contratos</h3>
+                <canvas id="graficoPrazo"></canvas>
+              </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Painel Contratos Duplicados -->
+    <div id="painelDuplicados" class="hidden">
+        <section id="controles" class="bg-white p-6 rounded shadow mb-6">
+          <div class="border-b pb-4 mb-4">
+            <h2 class="text-lg font-bold text-gray-800">1. Critérios para Duplicidade</h2>
+            <p class="text-sm text-gray-600 mt-1">Selecione os campos que devem ser idênticos para um contrato ser considerado um duplicado.</p>
+          </div>
+          <div id="criterios-selecao" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <!-- Checkboxes serão inseridos aqui pelo JS -->
+          </div>
+          <div class="mt-6 text-center">
+            <button id="verificarDuplicados" class="btn px-6 py-2 rounded font-semibold">Verificar Duplicados</button>
+          </div>
+        </section>
+        <section id="resultados" class="bg-white p-6 rounded shadow">
+            <div class="border-b pb-4 mb-4">
+                <h2 class="text-lg font-bold text-gray-800">2. Resultados da Análise</h2>
+            </div>
+            <div id="resultados-conteudo" class="text-center text-gray-500">
+                <p>Aguardando a verificação...</p>
+            </div>
+        </section>
+    </div>
+  </main>
+
+  <!-- ========= MODAL DE SENHA ========= -->
+  <div id="passwordModal" class="fixed inset-0 z-[1004] bg-black bg-opacity-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded shadow-lg p-6 w-full max-w-sm">
+      <h3 class="text-lg font-bold mb-4">Acesso Restrito</h3>
+      <p class="text-sm text-gray-600 mb-4">Por favor, insira a senha de administrador para continuar.</p>
+      <form id="passwordForm">
+        <input type="password" id="passwordInput" class="form-input w-full" placeholder="Senha">
+        <p id="passwordError" class="text-red-500 text-xs mt-1 hidden">Senha incorreta!</p>
+        <div class="mt-4 flex justify-end gap-2">
+            <button type="button" id="cancelPassword" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded text-sm">Cancelar</button>
+            <button type="submit" class="btn px-4 py-2 rounded text-sm">Entrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ========= MODAL DE CONFIRMAÇÃO DE EXCLUSÃO ========= -->
+  <div id="confirmDeleteModal" class="fixed inset-0 z-[1003] bg-black bg-opacity-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded shadow-lg p-6 w-full max-w-sm">
+      <h3 class="text-lg font-bold mb-2 text-red-700">Confirmar Exclusão</h3>
+      <p class="text-sm text-gray-600 mb-4">Você tem certeza que deseja excluir este contrato? Esta ação não pode ser desfeita.</p>
+      <div class="mt-4 flex justify-end gap-2">
+          <button type="button" id="cancelDelete" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded text-sm">Cancelar</button>
+          <button type="button" id="confirmDelete" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded text-sm">Excluir</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========= MODAL DE COMPARAÇÃO DE DUPLICADOS ========= -->
+  <div id="compareModal" class="fixed inset-0 z-[1002] bg-black bg-opacity-50 flex items-center justify-center hidden p-4">
+    <div class="bg-white rounded shadow-lg p-6 relative w-full modal-inner">
+      <button id="closeCompareModal" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-3xl leading-none" title="Fechar">&times;</button>
+      <h3 class="text-lg font-bold mb-4">Comparar Contratos Duplicados</h3>
+      <div id="compare-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Colunas de comparação serão inseridas aqui -->
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ========= MODAL DE DETALHES E EDIÇÃO ========= -->
+  <div id="modalDetalhes" class="fixed inset-0 z-[1001] bg-black bg-opacity-50 flex items-center justify-center hidden p-4" aria-modal="true" role="dialog">
+    <div class="bg-white rounded shadow-lg modal-inner p-6 relative w-full">
+      <button id="fecharModal" class="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-3xl leading-none" title="Fechar">&times;</button>
+      <h3 class="text-lg font-bold mb-4" id="modalTitulo"></h3>
+      
+      <div id="modal-display-view">
+          <div id="modalConteudo" class="space-y-2 text-sm"></div>
+          <div class="mt-6 text-right border-t pt-4 space-x-2">
+              <button id="btnExcluirContrato" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold">Excluir</button>
+              <button id="btnEditarContrato" class="btn px-4 py-2 rounded font-semibold">Editar</button>
+          </div>
+      </div>
+
+      <div id="modal-edit-form" class="hidden">
+          <form id="form-edicao">
+              <div id="form-fields" class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm"></div>
+              <div class="mt-6 text-right border-t pt-4 space-x-2">
+                  <button type="button" id="btnCancelarEdicao" class="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded">Cancelar</button>
+                  <button type="submit" id="btnSalvar" class="btn px-4 py-2 rounded font-semibold">Salvar</button>
+              </div>
+          </form>
+      </div>
+    </div>
+  </div>
+
+  <footer class="text-center text-gray-500 text-sm py-4">©️ 2025 Dashboard de Contratos</footer>
+
+<script>
+  // --- VARIÁVEIS GLOBAIS E CONFIGURAÇÃO ---
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwde77NSCugyCeRegATe3n7qPwfVzUqH-WatuX7oJj1l4NfW2mrecnqCZ1EaIo4dVCJ/exec"; 
+  const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ0URMfEf9HGcXuuCHgKFRfOEx7t_zR_lSMS7xNiFjPe17ZwH3u5Tw8duT1AwCsktqrY3CA3slAKxVL/pub?output=csv";
+  const ADMIN_PASSWORD = "!C-Fiscon.DmaeADM"; // Senha de administração
+
+  let contratos = [];
+  let contratosFiltrados = [];
+  let tabela = null;
+  let currentEditingContract = null;
+  let todosCabecalhos = []; // Esta será a lista de chaves JS limpas (ex: 'ValorContrato')
+  let chartSituacao = null, chartAno = null, chartPrazo = null;
+  let termoBuscaUniversal = "";
+  let _onAuthSuccess = null; // Callback de autenticação
+
+  const fiscaisCFISCON_EXIBIVEL = [ { norm: "CARMEN LUCIA ULGUIM CHAGAS PADOIN", exib: "Carmen Lucia Ulguim Chagas Padoin" }, { norm: "MARCIA BEHEREGARAY ARGOLLO MENDES", exib: "Marcia Beheregaray Argollo Mendes" }, { norm: "MAURICIO LEANDRO BORGES ROSA", exib: "Mauricio Leandro Borges Rosa" }, { norm: "OTAVIO DA SILVA AFONSO", exib: "Otavio da Silva Afonso" }, { norm: "ARIADNE SILVEIRA TUPY ASSU", exib: "Ariadne Silveira Tupy Assu" }, { norm: "FERNANDA DA ROSA PEDERNEiras", exib: "Fernanda Da Rosa Pederneiras" }, { norm: "FELIPE PAIVA CURI", exib: "Felipe Paiva Curi" } ];
+  const CRITERIOS_SUGERIDOS = [ { id: 'NProcesso', label: 'N° Processo', checked: true }, { id: 'AnoProcesso', label: 'Ano Processo', checked: true }, { id: 'Contratado', label: 'Contratado', checked: true }, { id: 'CPFCNPJ', label: 'CPF/CNPJ', checked: false }, { id: 'Objeto', label: 'Objeto', checked: true }, { id: 'NContrato', label: 'N° Contrato', checked: false }, { id: 'AnoContrato', label: 'Ano Contrato', checked: false }, { id: 'InicioVigencia', label: 'Início Vigência', checked: false }, ];
+  
+  const colunaMap = { 'rowid': 'RowID', 'instrumento': 'Instrumento', 'n contrato': 'NContrato', 'nº contrato': 'NContrato', 'ano contrato': 'AnoContrato', 'contratado': 'Contratado', 'cpfcnpj': 'CPFCNPJ', 'descricao do objeto': 'DescricaoDoObjeto', 'valor contrato': 'ValorContrato', 'n ter aditivo apostilamento': 'NTerAditivoApostilamento', 'valor com alteracoes': 'ValorComAlteracoes', 'assinatura': 'Assinatura', 'inicio vigencia': 'InicioVigencia', 'final vigencia': 'FinalVigencia', 'situacao': 'Situacao', 'n processo': 'NProcesso', 'nº processo': 'NProcesso', 'ano processo': 'AnoProcesso', 'gestores': 'Gestores', 'natureza objeto': 'NaturezaObjeto', 'objeto': 'Objeto', 'suplentes': 'Suplentes', 'fiscais': 'Fiscais', 'prazo': 'Prazo', 'prazo maximo vigencia': 'PrazoMaximoVigencia', 'prorrogacao prazo': 'ProrogacaoPrazo', 'lei': 'Lei', 'obs': 'OBS' };
+  const jsKeyToOriginalHeaderMap = { 'RowID': 'RowID', 'Instrumento': 'Instrumento', 'NContrato': 'N° Contrato', 'AnoContrato': 'Ano Contrato', 'Contratado': 'Contratado', 'CPFCNPJ': 'CPF/CNPJ', 'DescricaoDoObjeto': 'Descrição do Objeto', 'ValorContrato': 'Valor Contrato', 'NTerAditivoApostilamento': 'Nº Ter. Aditivo Apostilamento', 'ValorComAlteracoes': 'Valor com Alterações', 'Assinatura': 'Assinatura', 'InicioVigencia': 'Início Vigência', 'FinalVigencia': 'Final Vigência', 'Situacao': 'Situação', 'NProcesso': 'N° Processo', 'AnoProcesso': 'Ano Processo', 'Gestores': 'Gestor(es)', 'NaturezaObjeto': 'Natureza Objeto', 'Objeto': 'Objeto', 'Suplentes': 'Suplente(s)', 'Fiscais': 'Fiscal(is)', 'Prazo': 'Prazo', 'PrazoMaximoVigencia': 'Prazo Máximo Vigência', 'ProrogacaoPrazo': 'Prorrogação Prazo', 'Lei': 'Lei', 'OBS': 'OBS:' };
+
+  // --- FUNÇÕES DE AUTENTICAÇÃO E NOTIFICAÇÃO ---
+  function requestPassword(onSuccessCallback) {
+    if (sessionStorage.getItem('isAdminAuthenticated') === 'true') {
+        if(typeof onSuccessCallback === 'function') onSuccessCallback();
+        return;
+    }
+    _onAuthSuccess = onSuccessCallback;
+    $('#passwordInput').val('');
+    $('#passwordError').addClass('hidden');
+    $('#passwordModal').removeClass('hidden');
+    $('#passwordInput').focus();
+  }
+
+  function showNotification(message, type = 'success') {
+    const notification = $('#notification');
+    $('#notification-message').text(message);
+    
+    notification.removeClass('bg-green-500 bg-red-500');
+    if (type === 'error') {
+      notification.addClass('bg-red-500');
+    } else {
+      notification.addClass('bg-green-500');
+    }
+
+    notification.removeClass('hidden');
+    setTimeout(() => {
+      notification.addClass('hidden');
+    }, 3000); // Oculta após 3 segundos
+  }
+
+  // --- FUNÇÕES AUXILIARES GERAIS ---
+  function normalizeCol(str) { return (str||'').normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "").replace(/[^a-zA-Z0-9 ]/g, "").toLowerCase(); }
+  function excelSerialToDate(serial) { var utc_days = Math.floor(serial - 25569); var utc_value = utc_days * 86400; var date_info = new Date(utc_value * 1000); return date_info; }
+  function parseDate(dateStr) { if (!dateStr) return null; if (typeof dateStr === 'number' || (!isNaN(dateStr) && String(dateStr).length >= 5 && String(dateStr).length <= 6)) { return excelSerialToDate(Number(dateStr)); } if (/^\d{4}-\d{2}-\d{2}/.test(dateStr)) { const [y, m, d] = dateStr.split('-'); return new Date(y, m - 1, d); } if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) { const [d, m, y] = dateStr.split('/'); return new Date(y, m - 1, d); } if (/^\d{2}\/\d{2}\/\d{2}$/.test(dateStr)) { const [d, m, y] = dateStr.split('/'); const ano = Number(y) < 50 ? '20' + y : '19' + y; return new Date(ano, m - 1, d); } let d = new Date(dateStr); return isNaN(d.getTime()) ? null : d; }
+  function formatDateBR(dateStr) { const d = parseDate(dateStr); if (!d) return ""; const day = String(d.getDate()).padStart(2, '0'); const month = String(d.getMonth() + 1).padStart(2, '0'); const year = d.getFullYear(); return `${day}/${month}/${year}`; }
+  function formatCurrencyBR(value) { if (value === null || value === undefined || value === '') return ""; let number = parseFloat(String(value).replace(/[^0-9,-]/g, '').replace(',', '.')); if (isNaN(number)) return ""; return number.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+  function showSaving(show = true, text = "Salvando...") { $('#savingText').text(text); $('#savingOverlay').toggleClass('hidden', !show); }
+  function showLoading(show = true, text = "Carregando contratos...") { $('#loadingText').text(text); $('#loadingOverlay').toggleClass('hidden', !show); }
+  function diasAteVencimento(finalVigencia) { let dataFinal = parseDate(finalVigencia); if (!dataFinal) return null; let hoje = new Date(); hoje.setHours(0,0,0,0); return Math.ceil((dataFinal - hoje) / (1000 * 60 * 60 * 24)); }
+  function formatDiasVencimento(finalVigencia) { let dias = diasAteVencimento(finalVigencia); if (dias === null) return ""; if (dias === 0) return "vence hoje"; if (dias === 1) return "vence em 1 dia"; if (dias > 1) return `vence em ${dias} dias`; if (dias < 0) return "vencido"; return ""; }
+  function prazoMeses(inicio, fim) { const d1 = parseDate(inicio); const d2 = parseDate(fim); if (!d1 || !d2) return ""; let months = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()); if (d2.getDate() >= d1.getDate()) { months++; } return months > 0 ? `${months} mês${months > 1 ? 'es' : ''}` : ""; }
+  function limparPrefixoNumero(texto) { return (texto || '').replace(/^\s*\d+\s*[-–—]\s*/g, '').replace(/^\s*\d+\s+/g, '').trim(); }
+  function normalizarNomeFiscal(nome) { if (!nome) return ''; let n = nome.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[-–—]/g, " ").replace(/\s+/g, " ").replace(/[^A-Z ]/gi, "").toUpperCase().trim(); n = n.replace(/\bASSU\b/g, "ASSU"); return n; }
+  function agruparSituacao(sit) { if (!sit) return "Não Vigente"; const norm = (sit || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[–—-]/g, "-").replace(/\s+/g, " ").trim().toLowerCase(); if (norm.includes("encerrado")) return "Encerrado"; if (norm.includes("expirado")) return "Expirado"; if (norm.includes("vigente")) return "Vigente"; return "Não Vigente"; }
+  function mapearTipoObjeto(objeto) { if (!objeto) return "Outros Serviços"; const objetoNorm = objeto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); if (objetoNorm.includes("fornecimento") || objetoNorm.includes("material") || objetoNorm.includes("compra")) { return "Compras"; } if (objetoNorm.includes("obra") || objetoNorm.includes("engenharia") || objetoNorm.includes("manutenção") || objetoNorm.includes("construção")) { return "Obras e Serviços de Engenharia"; } if (objetoNorm.includes("serviço") || objetoNorm.includes("locação") || objetoNorm.includes("alienação") || objetoNorm.includes("limpeza")) { return "Outros Serviços"; } return "Outros Serviços"; }
+  function contratoTemFiscalCFISCON(contrato) { return (contrato.Fiscais ?? '').split(/[,;\n]+/).some(f => { const nome = limparPrefixoNumero(f); return fiscaisCFISCON_EXIBIVEL.some(fiscal => fiscal.norm === normalizarNomeFiscal(nome)); }); }
+  
+  // --- LÓGICA DE DADOS, FORMULÁRIOS E UI ---
+  function mostrarFormularioEdicao(contrato) { currentEditingContract = contrato; $('#modalTitulo').text(`Editando Contrato: ${contrato.NContrato || ''}`); preencherFormulario(contrato); }
+  function mostrarFormularioNovoContrato() { currentEditingContract = null; $('#modalTitulo').text('Adicionar Novo Contrato'); const novoContratoVazio = todosCabecalhos.reduce((acc, header) => { acc[header] = ''; return acc; }, {}); preencherFormulario(novoContratoVazio); }
+  function preencherFormulario(contrato) {
+    const formFields = $('#form-fields');
+    let html = '';
+    const camposIgnorados = ['RowID', 'originalIndex'];
+    todosCabecalhos.forEach(jsKey => {
+        if (camposIgnorados.includes(jsKey)) return;
+        const originalHeader = jsKeyToOriginalHeaderMap[jsKey] || jsKey;
+        const valor = contrato[jsKey] ?? '';
+        let inputType = 'text';
+        let inputValue = valor;
+        let extras = '';
+
+        if (['InicioVigencia', 'FinalVigencia', 'Assinatura'].includes(jsKey)) {
+            inputType = 'date';
+            const parsed = parseDate(valor);
+            inputValue = parsed ? new Date(parsed.getTime() - (parsed.getTimezoneOffset() * 60000)).toISOString().split('T')[0] : '';
+        } else if (['ValorContrato', 'ValorComAlteracoes'].includes(jsKey)) {
+            inputType = 'text'; // CORREÇÃO: Usar texto para aceitar vírgula
+            extras = 'placeholder="Ex: 20252,85"';
+            let numericValue = parseFloat(String(valor).replace(',', '.'));
+            inputValue = isNaN(numericValue) ? '' : numericValue.toString().replace('.', ','); // Mostra com vírgula no form
+        } else if (jsKey === 'Prazo') {
+            extras = 'readonly placeholder="Calculado automaticamente"';
+            inputValue = prazoMeses(contrato.InicioVigencia, contrato.FinalVigencia);
+        }
+        html += `<div><label for="edit-${jsKey}" class="block text-xs font-medium text-gray-700 mb-1">${originalHeader}</label><input type="${inputType}" id="edit-${jsKey}" name="${jsKey}" value="${inputValue}" class="form-input" ${extras}></div>`;
+    });
+    formFields.html(html);
+    $('#modal-display-view').addClass('hidden');
+    $('#modal-edit-form').removeClass('hidden');
+    $('#modalDetalhes').removeClass('hidden');
+  }
+  function salvarAlteracoes(event) {
+    event.preventDefault();
+    showSaving(true);
+    const formData = new FormData(event.target);
+    const dataFromForm = Object.fromEntries(formData.entries());
+
+    // CORREÇÃO: "Limpa" os valores de moeda antes de enviar
+    const currencyFields = ['ValorContrato', 'ValorComAlteracoes'];
+    currencyFields.forEach(jsKey => {
+        if (dataFromForm[jsKey]) {
+            // Remove pontos de milhar, depois troca a vírgula decimal por ponto
+            dataFromForm[jsKey] = dataFromForm[jsKey].replace(/\./g, '').replace(',', '.');
+        }
+    });
+
+    // Traduz as chaves JS de volta para os nomes originais das colunas
+    const dataParaEnviar = {};
+    for (const jsKey in dataFromForm) {
+        const originalKey = jsKeyToOriginalHeaderMap[jsKey];
+        if (originalKey) {
+            dataParaEnviar[originalKey] = dataFromForm[jsKey];
+        }
+    }
+    
+    // Calcula o prazo automaticamente
+    if (dataFromForm.InicioVigencia && dataFromForm.FinalVigencia) {
+        dataParaEnviar['Prazo'] = prazoMeses(dataFromForm.InicioVigencia, dataFromForm.FinalVigencia);
+    }
+
+    // Reformatar datas de YYYY-MM-DD para DD/MM/YYYY para a planilha
+    const dateFieldsJsKeys = ['InicioVigencia', 'FinalVigencia', 'Assinatura'];
+    dateFieldsJsKeys.forEach(jsKey => {
+        const originalKey = jsKeyToOriginalHeaderMap[jsKey];
+        if (originalKey && dataParaEnviar[originalKey] && /^\d{4}-\d{2}-\d{2}$/.test(dataParaEnviar[originalKey])) {
+            const [y, m, d] = dataParaEnviar[originalKey].split('-');
+            dataParaEnviar[originalKey] = `${d}/${m}/${y}`;
+        }
+    });
+
+    const isNew = currentEditingContract === null;
+    const payload = { action: isNew ? 'create' : 'update', data: dataParaEnviar };
+    if (!isNew) { payload.rowId = currentEditingContract.RowID; }
+
+    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
+    .catch(console.error);
+
+    setTimeout(() => {
+        $('#modalDetalhes').addClass('hidden');
+        showSaving(false);
+        showNotification('Solicitação enviada! A planilha será atualizada.');
+        setTimeout(carregarContratosPlanilha, 2000);
+    }, 1500);
+  }
+   function solicitarExclusao() {
+    requestPassword(() => {
+      $('#confirmDeleteModal').removeClass('hidden');
+    });
+  }
+  function excluirContrato() {
+    if (!currentEditingContract || !currentEditingContract.RowID) {
+      showNotification("Erro: Contrato inválido ou RowID não encontrado.", 'error');
+      return;
+    }
+    showSaving(true, "Excluindo...");
+    const payload = {
+      action: 'delete',
+      rowId: currentEditingContract.RowID
+    };
+
+    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
+    .catch(console.error);
+
+    // Otimista: remove da UI imediatamente
+    setTimeout(() => {
+      $('#modalDetalhes').addClass('hidden');
+      $('#confirmDeleteModal').addClass('hidden');
+      $('#compareModal').addClass('hidden');
+
+      const index = contratos.findIndex(c => c.originalIndex === currentEditingContract.originalIndex);
+      if (index > -1) {
+        contratos.splice(index, 1);
+      }
+      aplicarFiltros();
+
+      if ($('#navDuplicados').hasClass('active')) {
+        verificarDuplicados();
+      }
+      
+      showSaving(false);
+      showNotification('Contrato excluído com sucesso!');
+    }, 1000);
+  }
+
+  function processData(data, headers) {
+    const validData = data.filter(row => row.RowID && row.RowID.trim() !== '');
+    
+    todosCabecalhos = [];
+    const seenJsKeys = new Set();
+    headers.forEach(originalHeader => {
+        const normalized = normalizeCol(originalHeader);
+        const jsKey = colunaMap[normalized] || originalHeader.trim().replace(/[^a-zA-Z0-9]/g, '');
+        if (!seenJsKeys.has(jsKey)) {
+            todosCabecalhos.push(jsKey);
+            seenJsKeys.add(jsKey);
+        }
+    });
+
+    contratos = validData.map((row, index) => { 
+      let obj = { originalIndex: index };
+      headers.forEach(header => {
+        const normalized = normalizeCol(header);
+        const jsKey = colunaMap[normalized] || header.trim().replace(/[^a-zA-Z0-9]/g, '');
+        obj[jsKey] = row[header] ? String(row[header]).trim() : row[header];
+      });
+      
+      const situacaoOriginal = (obj.Situacao || '').toLowerCase().trim();
+      if (situacaoOriginal !== 'encerrado') {
+          const dias = diasAteVencimento(obj.FinalVigencia);
+          if (dias !== null) {
+              if (dias < 0) {
+                  obj.Situacao = 'Expirado';
+              } else {
+                  obj.Situacao = 'Vigente';
+              }
+          }
+      } else {
+          obj.Situacao = 'Encerrado'; // Mantém encerrado mesmo se data passou
+      }
+          const dias = diasAteVencimento(obj.FinalVigencia);
+          if (dias !== null) {
+              if (dias < 0) {
+                  obj.Situacao = 'Expirado';
+              } else {
+                  obj.Situacao = 'Vigente';
+              }
+          }
+      }
+      return obj;
+    });
+    contratosFiltrados = [...contratos];
+    atualizarFiltros();
+    aplicarFiltros();
+  }
+  function carregarContratosPlanilha() { showLoading(true); const url = `${SHEET_CSV_URL}&t=${new Date().getTime()}`; Papa.parse(url, { download: true, header: true, skipEmptyLines: true, complete: results => { if (results.data && results.data.length > 0) { processData(results.data, results.meta.fields); } else { showNotification('Não foi possível carregar dados da planilha.', 'error'); } showLoading(false); }, error: err => { showLoading(false); showNotification('Erro ao carregar dados da planilha!', 'error'); console.error(err); } }); }
+
+  // --- FILTROS E LÓGICA DA TABELA PRINCIPAL ---
+  function aplicarFiltros() {
+    const ano = $('#filtroAnoContrato').val();
+    const vig = $('#filtroFinalVigencia').val();
+    const tipoObjeto = $('#filtroTipoObjeto').val();
+    const fiscal = $('#filtroFiscal').val();
+    const situacao = $('#filtroSituacao').val();
+    
+    const normalizeSearch = (str) => (str || '').toString().toLowerCase().replace(/[.\-\/]/g, '');
+    const termoNormalizado = normalizeSearch(termoBuscaUniversal);
+
+    contratosFiltrados = contratos.filter(c => {
+        if (termoBuscaUniversal && !Object.values(c).some(val => normalizeSearch(val).includes(termoNormalizado))) return false;
+        if (ano && String(c.AnoContrato ?? '') !== ano) return false;
+        if (tipoObjeto && mapearTipoObjeto(c.Objeto) !== tipoObjeto) return false;
+        if (fiscal && !(c.Fiscais ?? '').split(/[,;\n]+/).map(f => limparPrefixoNumero(f).trim()).includes(fiscal)) return false;
+        if (situacao && agruparSituacao(c.Situacao) !== situacao) return false;
+        if (vig) { let dias = diasAteVencimento(c.FinalVigencia); if (dias === null || dias < 0 || dias > Number(vig)) return false; }
+        return true;
+    });
+    // Ordena por dias restantes, encerrados por último
+    contratosFiltrados.sort((a,b) => {
+        const aEnc = (a.Situacao || '').toLowerCase().includes('encerrado');
+        const bEnc = (b.Situacao || '').toLowerCase().includes('encerrado');
+        if (aEnc && !bEnc) return 1;
+        if (!aEnc && bEnc) return -1;
+        const diasA = diasAteVencimento(a.FinalVigencia) ?? 9999;
+        const diasB = diasAteVencimento(b.FinalVigencia) ?? 9999;
+        return diasA - diasB;
+    });
+    atualizarTabela();
+    atualizarAvisosVencimento();
+    renderPainelFiscaisCFISCON();
+    desenharGraficos();
+  }
+  function fillSelectOptions(selectId, array, field, multiSplit = false) { const select = $(`#${selectId}`); const seen = new Set(); array.forEach(item => { let values = multiSplit ? (item[field] ?? '').split(/[,;\n]+/) : [item[field]]; values.forEach(v => { const cleaned = multiSplit ? limparPrefixoNumero(v).trim() : String(v).trim(); if (cleaned) seen.add(cleaned); }); }); const options = Array.from(seen).sort((a,b) => a.localeCompare(b)); select.html('<option value="">Todos</option>' + options.map(o => `<option value="${o}">${o}</option>`).join('')); }
+  function fillSelectOptionsSituacao(selectId, array) { const select = $(`#${selectId}`); const seen = new Set(); array.forEach(c => { const grp = agruparSituacao(c.Situacao); if (grp) seen.add(grp); }); const values = ["Vigente", "Expirado", "Encerrado", "Não Vigente"].filter(v => seen.has(v)); select.html('<option value="">Todas</option>' + values.map(val => `<option value="${val}">${val}</option>`).join('')); }
+  function atualizarFiltros() { fillSelectOptions('filtroAnoContrato', contratos, 'AnoContrato'); fillSelectOptions('filtroFiscal', contratos, 'Fiscais', true); fillSelectOptionsSituacao('filtroSituacao', contratos); }
+  function atualizarTabela() { const columns = [ { title: "N° Contrato", data: "NContrato" }, { title: "Ano", data: "AnoContrato" }, { title: "Contratado", data: "Contratado" }, { title: "Final Vigência", data: "FinalVigencia", render: (data) => formatDateBR(data) }, { title: "Vence em", data: "FinalVigencia", render: (data) => formatDiasVencimento(data) }, { title: "Situação", data: "Situacao" }, { title: "", data: null, orderable: false, render: (data, type, row) => `<button class="ver-detalhes btn text-xs px-2 py-1 rounded" data-idx="${row.originalIndex}">Detalhes</button>` } ]; if ($.fn.DataTable.isDataTable('#tabelaContratos')) { tabela.clear().rows.add(contratosFiltrados).draw(); } else { tabela = $('#tabelaContratos').DataTable({ data: contratosFiltrados, columns: columns, pageLength: 10, lengthMenu: [10, 25, 50, 100], language: { url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json" }, createdRow: function(row, data) { let dias = diasAteVencimento(data.FinalVigencia); if (dias !== null && dias >= 0 && dias < 30) { $(row).css('background-color', '#FFCCCC'); } else if (dias !== null && dias >= 30 && dias < 60) { $(row).css('background-color', '#FFF9CC'); } else if (dias !== null && dias >= 60) { $(row).css('background-color', '#D1FFD1'); } if (contratoTemFiscalCFISCON(data)) { $(row).css('font-weight', 'bold').css('border-left', '4px solid #1E4069'); }
+          if ((data.Situacao || '').toLowerCase().includes('encerrado')) {
+              $(row).css({'color':'#999','background-color':'#f5f5f5'});
+          } } }); } }
+  function mostrarDetalhesContrato(contrato) {
+    currentEditingContract = contrato;
+    let html = `<table class="min-w-full text-left border border-gray-200 text-xs"><tbody>`;
+    
+    todosCabecalhos.forEach(jsKey => {
+        const originalHeader = jsKeyToOriginalHeaderMap[jsKey] || jsKey;
+        const v = contrato[jsKey];
+        if (jsKey === 'originalIndex') return;
+
+        let displayValue = v;
+        if (['FinalVigencia', 'InicioVigencia', 'Assinatura'].includes(jsKey)) {
+            displayValue = formatDateBR(v);
+        } else if (['ValorContrato', 'ValorComAlteracoes'].includes(jsKey)) {
+            displayValue = formatCurrencyBR(v);
+        }
+        html += `<tr class="border-b"><th class="py-1 px-2 bg-gray-100 font-semibold w-40">${originalHeader}</th><td class="py-1 px-2">${displayValue ?? ''}</td></tr>`;
+    });
+
+    html += `<tr><th class="py-1 px-2 bg-gray-100 font-semibold w-40">Prazo Calculado</th><td class="py-1 px-2">${prazoMeses(contrato.InicioVigencia, contrato.FinalVigencia)}</td></tr>`;
+    html += `</tbody></table>`;
+    $('#modalTitulo').text(`Detalhes do Contrato: ${contrato.NContrato || ''}`);
+    $('#modalConteudo').html(html);
+    $('#modal-edit-form').addClass('hidden');
+    $('#modal-display-view').removeClass('hidden');
+    $('#modalDetalhes').removeClass('hidden');
+  }
+  
+  // --- PAINEL C-FISCON E AVISOS ---
+  function renderPainelFiscaisCFISCON() { let html = `<div class="mb-6 p-4 bg-[#E6ECEF] border-l-4 border-[#1E4069] rounded shadow"><strong>Contratos C-FISCON:</strong><div class="flex flex-wrap gap-2 mt-2">`; fiscaisCFISCON_EXIBIVEL.forEach(obj => { html += `<button class="btn-fiscal-cfiscon bg-[#1E4069] hover:bg-[#4DA8DA] text-white px-3 py-1 rounded text-xs font-semibold" data-nome="${obj.norm}">${obj.exib}</button>`; }); html += `</div><div id="cfiscon-contratos-lista" class="mt-4 hidden"></div></div>`; $('#painelFiscaisCFISCON').html(html); }
+  function mostrarContratosFiscalCFISCON(normFiscal) {
+    const contratosDoFiscal = contratosFiltrados.filter(c => (c.Fiscais ?? '').split(/[,;\n]+/).some(f => normalizarNomeFiscal(limparPrefixoNumero(f)) === normFiscal));
+    let html = `<div class="mb-2"><span class="font-bold text-[#1E4069]">${(fiscaisCFISCON_EXIBIVEL.find(f => f.norm === normFiscal) || {}).exib || normFiscal}</span><button class="ml-4 px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 close-cfiscon-contratos" title="Fechar">Fechar</button></div>`;
+    if (contratosDoFiscal.length === 0) {
+        html += `<div>Nenhum contrato encontrado para este fiscal nos filtros atuais.</div>`;
+    } else {
+        html += `<div class="overflow-x-auto"><table class="min-w-full text-xs border rounded mini-table"><thead class="bg-[#E6ECEF]"><tr><th class="px-2 py-1">N° Contrato</th><th class="px-2 py-1">Contratado</th><th class="px-2 py-1">Final Vigência</th><th class="px-2 py-1">Vence em</th><th class="px-2 py-1"></th></tr></thead><tbody>`;
+        contratosDoFiscal.forEach(c => {
+            let dias = diasAteVencimento(c.FinalVigencia);
+            let bgColor = '';
+            if (dias !== null && dias >= 0 && dias < 30) {
+                bgColor = 'background-color:#FFCCCC;';
+            } else if (dias !== null && dias >= 30 && dias < 60) {
+                bgColor = 'background-color:#FFF9CC;';
+            } else if (dias !== null && dias >= 60) {
+                bgColor = 'background-color:#D1FFD1;';
+            }
+            html += `<tr style="${bgColor}">
+                <td class="px-2 py-1">${c.NContrato || ''}</td>
+                <td class="px-2 py-1">${c.Contratado || ''}</td>
+                <td class="px-2 py-1">${formatDateBR(c.FinalVigencia) || ''}</td>
+                <td class="px-2 py-1">${formatDiasVencimento(c.FinalVigencia)}</td>
+                <td class="px-2 py-1 text-center"><button class="ver-detalhes-mini btn text-xs px-2 py-1 rounded" data-idx="${c.originalIndex}" title="Ver detalhes">Detalhes</button></td>
+            </tr>`;
+        });
+        html += `</tbody></table></div>`;
+    }
+    const listaDiv = $('#cfiscon-contratos-lista');
+    listaDiv.html(html).removeClass('hidden');
+  }
+  function atualizarAvisosVencimento() { let html = ''; const vencendo30 = contratosFiltrados.filter(c => { let dias = diasAteVencimento(c.FinalVigencia); return dias !== null && dias >= 0 && dias < 30; }); const vencendo60 = contratosFiltrados.filter(c => { let dias = diasAteVencimento(c.FinalVigencia); return dias !== null && dias >= 30 && dias < 60; }); html += renderAvisoComMiniTabela("Atenção", "red", vencendo30, "contratos-ate30", "Ver todos os contratos vencendo em até 30 dias"); html += renderAvisoComMiniTabela("Alerta", "yellow", vencendo60, "contratos-ate60", "Ver todos os contratos vencendo em até 60 dias"); $('#avisosVencimento').html(html); }
+  function renderAvisoComMiniTabela(titulo, cor, lista, boxId, labelBtn) { if (!lista.length) return ''; let corAviso, corHead; if (cor === 'red') { corAviso = 'bg-red-100 border-red-500 text-red-700'; corHead = 'bg-red-200'; } else { corAviso = 'bg-yellow-100 border-yellow-500 text-yellow-700'; corHead = 'bg-yellow-200'; } let ordenados = [...lista].sort((a, b) => diasAteVencimento(a.FinalVigencia) - diasAteVencimento(b.FinalVigencia)); const criarTabelaHTML = (contratosParaRender) => `<div class="overflow-x-auto mb-2"><table class="mini-table min-w-full text-xs border rounded"><thead class="${corHead}"><tr><th class="px-2 py-1">N° Contrato</th><th class="px-2 py-1">Contratado</th><th class="px-2 py-1">Final Vigência</th><th class="px-2 py-1">Vence em</th><th class="px-2 py-1"></th></tr></thead><tbody>${contratosParaRender.map(c => `<tr ${contratoTemFiscalCFISCON(c) ? 'style="font-weight:bold;border-left:4px solid #1E4069;"' : ''}><td class="px-2 py-1">${c.NContrato || ''}</td><td class="px-2 py-1">${c.Contratado || ''}</td><td class="px-2 py-1">${formatDateBR(c.FinalVigencia)}</td><td class="px-2 py-1">${formatDiasVencimento(c.FinalVigencia)}</td><td class="px-2 py-1 text-center"><button class="ver-detalhes-mini btn text-xs px-2 py-1 rounded" data-idx="${c.originalIndex}">Detalhes</button></td></tr>`).join('')}</tbody></table></div>`; return `<div class="p-4 mb-2 ${corAviso} border-l-4 rounded"><strong>${titulo}:</strong> ${lista.length} contrato(s) vencendo em até <b>${cor === 'red' ? '30' : '60'} dias</b>.</div><div id="${boxId}-mini">${criarTabelaHTML(ordenados.slice(0, 5))}${lista.length > 5 ? `<div class="text-center"><button class="ver-mais-mini bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs" data-box="${boxId}">${labelBtn}</button></div>` : ''}</div><div id="${boxId}-full" class="hidden">${criarTabelaHTML(ordenados)}<div class="text-center"><button class="ver-menos-mini bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs" data-box="${boxId}">Ver menos</button></div></div>`; }
+
+  // --- GRÁFICOS E DUPLICADOS ---
+  function desenharGraficos() {
+    if (typeof Chart === 'undefined') return;
+    const situacoes = {};
+    contratosFiltrados.forEach(c => {
+        const grupo = agruparSituacao(c.Situacao);
+        if (grupo) situacoes[grupo] = (situacoes[grupo] || 0) + 1;
+    });
+    const sitLabels = ["Vigente", "Expirado", "Encerrado", "Não Vigente"];
+    const sitData = sitLabels.map(label => situacoes[label] || 0);
+    if (chartSituacao) chartSituacao.destroy();
+    chartSituacao = new Chart($('#graficoSituacao'), {
+        type: 'pie',
+        data: {
+            labels: sitLabels,
+            datasets: [{ data: sitData, backgroundColor: ['#1E4069', '#F4A261', '#E63946', '#4DA8DA'] }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' }, datalabels: { color: '#fff', font: { weight: 'bold' } } } }
+    });
+    const anos = {};
+    contratosFiltrados.forEach(c => {
+        if (c.AnoContrato) anos[c.AnoContrato] = (anos[c.AnoContrato] || 0) + 1;
+    });
+    const anoLabels = Object.keys(anos).sort();
+    const anoData = anoLabels.map(a => anos[a]);
+    if (chartAno) chartAno.destroy();
+    chartAno = new Chart($('#graficoAno'), {
+        type: 'bar',
+        data: {
+            labels: anoLabels,
+            datasets: [{ label: 'Contratos', data: anoData, backgroundColor: '#1E4069' }]
+        },
+        options: { responsive: true, plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold' } } } }
+    });
+    const faixas = [{ label: 'Até 6 meses', min: 0, max: 6 }, { label: '7 a 12 meses', min: 7, max: 12 }, { label: '13 a 24 meses', min: 13, max: 24 }, { label: '25 a 36 meses', min: 25, max: 36 }, { label: 'Acima de 36 meses', min: 37, max: 999 }];
+    const prazos = [0, 0, 0, 0, 0];
+    contratosFiltrados.forEach(c => {
+        let months = prazoMeses(c.InicioVigencia, c.FinalVigencia).replace(/[^0-9]/g, '');
+        if (months) {
+            for (let i = 0; i < faixas.length; i++) {
+                if (months >= faixas[i].min && months <= faixas[i].max) {
+                    prazos[i]++;
+                    break;
+                }
+            }
+        }
+    });
+    if (chartPrazo) chartPrazo.destroy();
+    chartPrazo = new Chart($('#graficoPrazo'), {
+        type: 'doughnut',
+        data: {
+            labels: faixas.map(f => f.label),
+            datasets: [{ data: prazos, backgroundColor: ['#1E4069', '#4DA8DA', '#00A651', '#F4A261', '#0078A8'] }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' }, datalabels: { color: '#fff', font: { weight: 'bold' } } } }
+    });
+  }
+  function renderizarCriterios() { const container = $('#criterios-selecao'); container.html(CRITERIOS_SUGERIDOS.map(c => `<label class="flex items-center space-x-2 p-2 rounded hover:bg-gray-100 cursor-pointer"><input type="checkbox" name="criterio" value="${c.id}" class="h-4 w-4 rounded border-gray-300 text-[#1E4069] focus:ring-[#1E4069]" ${c.checked ? 'checked' : ''}><span class="text-sm font-medium text-gray-700">${c.label}</span></label>`).join('')); }
+  function verificarDuplicados() { const criteriosSelecionados = Array.from($('input[name="criterio"]:checked')).map(cb => cb.value); if (criteriosSelecionados.length === 0) { showNotification('Selecione pelo menos um critério.', 'error'); return; } showLoading(true, "Verificando..."); const grupos = new Map(); contratos.forEach((contrato) => { const chave = criteriosSelecionados.map(criterio => (contrato[criterio] || '').toString().trim().toLowerCase()).join('||'); if (!chave) return; if (!grupos.has(chave)) grupos.set(chave, []); grupos.get(chave).push(contrato); }); const duplicados = Array.from(grupos.values()).filter(grupo => grupo.length > 1); setTimeout(() => { renderizarResultados(duplicados); showLoading(false); }, 500); }
+  function renderizarResultados(grupos) {
+    const container = $('#resultados-conteudo');
+    if (grupos.length === 0) {
+      container.html(`<div class="text-center py-8"><h3 class="mt-2 text-lg font-medium text-gray-900">Nenhum duplicado encontrado!</h3></div>`);
+      return;
+    }
+    let html = `<p class="text-left text-sm text-gray-600 mb-4">Encontrados <strong>${grupos.length}</strong> grupos de contratos duplicados.</p>`;
+    grupos.forEach((grupo, index) => {
+      html += `<div class="border rounded-lg shadow-sm mb-6 overflow-hidden">
+        <div class="bg-gray-50 p-3 border-b flex justify-between items-center">
+          <div>
+            <h4 class="font-bold text-md text-[#1E4069]">${grupo[0].Contratado || `Grupo ${index + 1}`} (${grupo.length} ocorrências)</h4>
+            <p class="text-xs text-gray-500">N° Contrato: ${grupo[0].NContrato || 'N/A'}</p>
+          </div>
+          <button class="comparar-duplicados btn text-xs px-3 py-1 rounded" data-indices='${JSON.stringify(grupo.map(c => c.originalIndex))}'>Comparar</button>
+        </div>
+      </div>`;
+    });
+    container.html(html);
+  }
+  function mostrarComparacao(indices) {
+    const container = $('#compare-container');
+    container.html(''); // Limpa o container
+    const contratosParaComparar = indices.map(idx => contratos.find(c => c.originalIndex === idx));
+
+    if (contratosParaComparar.length < 2) return; // Precisa de pelo menos 2 para comparar
+
+    const contrato1 = contratosParaComparar[0];
+    const contrato2 = contratosParaComparar[1];
+    
+    let htmlCol1 = '<div class="border rounded p-4">';
+    let htmlCol2 = '<div class="border rounded p-4">';
+
+    htmlCol1 += `<h4 class="font-bold mb-2 border-b pb-2">Contrato 1 (RowID: ${contrato1.RowID})</h4><table class="w-full text-xs"><tbody>`;
+    htmlCol2 += `<h4 class="font-bold mb-2 border-b pb-2">Contrato 2 (RowID: ${contrato2.RowID})</h4><table class="w-full text-xs"><tbody>`;
+
+    todosCabecalhos.forEach(jsKey => {
+      if (jsKey === 'originalIndex') return;
+      const originalHeader = jsKeyToOriginalHeaderMap[jsKey] || jsKey;
+      const val1 = contrato1[jsKey] || '';
+      const val2 = contrato2[jsKey] || '';
+      const diferenca = val1 !== val2 ? 'diferente' : '';
+      
+      let displayVal1 = ['FinalVigencia', 'InicioVigencia', 'Assinatura'].includes(jsKey) ? formatDateBR(val1) : val1;
+      let displayVal2 = ['FinalVigencia', 'InicioVigencia', 'Assinatura'].includes(jsKey) ? formatDateBR(val2) : val2;
+
+      htmlCol1 += `<tr class="${diferenca}"><th class="font-semibold p-1 align-top w-1/3">${originalHeader}</th><td class="p-1">${displayVal1}</td></tr>`;
+      htmlCol2 += `<tr class="${diferenca}"><th class="font-semibold p-1 align-top w-1/3">${originalHeader}</th><td class="p-1">${displayVal2}</td></tr>`;
+    });
+
+    htmlCol1 += `</tbody></table><div class="text-right mt-4"><button class="excluir-comparado bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded" data-idx="${contrato1.originalIndex}">Excluir Este</button></div></div>`;
+    htmlCol2 += `</tbody></table><div class="text-right mt-4"><button class="excluir-comparado bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded" data-idx="${contrato2.originalIndex}">Excluir Este</button></div></div>`;
+
+    container.html(htmlCol1 + htmlCol2);
+    $('#compareModal').removeClass('hidden');
+  }
+
+  // --- INICIALIZAÇÃO ---
+  $(document).ready(function() {
+    // CORREÇÃO: Registra o plugin do Chart.js uma única vez quando o documento está pronto.
+    if (typeof Chart !== 'undefined') {
+      Chart.register(ChartDataLabels);
+    }
+
+    function switchTab(activeTab) {
+        $('.nav-btn').removeClass('active').removeAttr('aria-current');
+        $(`#${activeTab}`).addClass('active').attr('aria-current', 'page');
+        $('main > div').addClass('hidden');
+        if (activeTab === 'navTabela') $('#painelTabela').removeClass('hidden');
+        else if (activeTab === 'navGraficos') $('#painelGraficos').removeClass('hidden');
+        else if (activeTab === 'navDuplicados') $('#painelDuplicados').removeClass('hidden');
+    }
+
+    // Navegação
+    $('#navTabela').on('click', () => switchTab('navTabela'));
+    $('#navGraficos').on('click', () => switchTab('navGraficos'));
+    $('#navDuplicados').on('click', () => switchTab('navDuplicados'));
+    
+    // Controles principais
+    $('#buscaUniversal').on('input', function() { termoBuscaUniversal = this.value.trim(); aplicarFiltros(); });
+    $('#filtros select').on('change', aplicarFiltros);
+    $('#limparFiltros').on('click', () => { $('#filtros select').val(''); termoBuscaUniversal = ''; $('#buscaUniversal').val(''); aplicarFiltros(); });
+    
+    // Botões com autenticação
+    $('#btnNovoContrato').on('click', () => { requestPassword(mostrarFormularioNovoContrato); });
+    $('body').on('click', '#btnEditarContrato', () => { requestPassword(() => mostrarFormularioEdicao(currentEditingContract)); });
+    $('body').on('click', '#btnExcluirContrato', solicitarExclusao);
+
+    // Modal de Senha
+    $('#passwordForm').on('submit', function(event) { event.preventDefault(); const password = $('#passwordInput').val(); if (password === ADMIN_PASSWORD) { sessionStorage.setItem('isAdminAuthenticated', 'true'); $('#passwordModal').addClass('hidden'); if (typeof _onAuthSuccess === 'function') { _onAuthSuccess(); } _onAuthSuccess = null; } else { $('#passwordError').removeClass('hidden'); } });
+    $('#cancelPassword').on('click', () => $('#passwordModal').addClass('hidden'));
+
+    // Modal de Confirmação de Exclusão
+    $('#cancelDelete').on('click', () => $('#confirmDeleteModal').addClass('hidden'));
+    $('#confirmDelete').on('click', excluirContrato);
+
+    // Modal de Comparação
+    $('body').on('click', '.comparar-duplicados', function() { const indices = JSON.parse($(this).attr('data-indices')); mostrarComparacao(indices); });
+    $('#closeCompareModal').on('click', () => $('#compareModal').addClass('hidden'));
+    $('body').on('click', '.excluir-comparado', function() {
+        const idx = $(this).data('idx');
+        currentEditingContract = contratos.find(c => c.originalIndex === idx);
+        solicitarExclusao();
+    });
+
+    // Modal de Edição/Detalhes
+    $('#form-edicao').on('submit', salvarAlteracoes);
+    $('#btnCancelarEdicao').on('click', () => { if (currentEditingContract) { $('#modal-display-view').removeClass('hidden'); $('#modal-edit-form').addClass('hidden'); } else { $('#modalDetalhes').addClass('hidden'); } });
+    $('#fecharModal').on('click', () => $('#modalDetalhes').addClass('hidden'));
+    
+    // Duplicados
+    renderizarCriterios();
+    $('#verificarDuplicados').on('click', verificarDuplicados);
+
+    // Eventos delegados para conteúdo dinâmico
+    $('body').on('click', '.ver-detalhes, .ver-detalhes-mini, .ver-detalhes-duplicados', function() { let idx = $(this).data('idx'); mostrarDetalhesContrato(contratos.find(c => c.originalIndex === idx)); });
+    $('body').on('click', '.btn-fiscal-cfiscon', function() { const nome = $(this).data('nome'); mostrarContratosFiscalCFISCON(nome); });
+    $('body').on('click', '.close-cfiscon-contratos', () => $('#cfiscon-contratos-lista').addClass('hidden'));
+    $('body').on('click', '.ver-mais-mini', function() { const boxId = $(this).data('box'); $(`#${boxId}-mini`).addClass('hidden'); $(`#${boxId}-full`).removeClass('hidden'); });
+    $('body').on('click', '.ver-menos-mini', function() { const boxId = $(this).data('box'); $(`#${boxId}-mini`).removeClass('hidden'); $(`#${boxId}-full`).addClass('hidden'); });
+
+    carregarContratosPlanilha();
+  });
 </script>
 </body>
 </html>
-
