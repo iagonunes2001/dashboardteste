@@ -124,15 +124,15 @@
               <div>
                 <h3 class="font-semibold mb-2 text-sm text-gray-700">Situação dos Contratos</h3>
                 <canvas id="graficoSituacao"></canvas>
-              </div>
-              <div>
-                <h3 class="font-semibold mb-2 text-sm text-gray-700">Contratos por Ano</h3>
-                <canvas id="graficoAno"></canvas>
-              </div>
-              <div>
-                <h3 class="font-semibold mb-2 text-sm font-bold text-gray-700">Prazos dos Contratos</h3>
-                <canvas id="graficoPrazo"></canvas>
-              </div>
+            	</div>
+            	<div>
+            		<h3 class="font-semibold mb-2 text-sm text-gray-700">Contratos por Ano</h3>
+            		<canvas id="graficoAno"></canvas>
+            	</div>
+            	<div>
+            		<h3 class="font-semibold mb-2 text-sm font-bold text-gray-700">Prazos dos Contratos</h3>
+            		<canvas id="graficoPrazo"></canvas>
+            	</div>
             </div>
         </section>
     </div>
@@ -152,10 +152,10 @@
         </section>
         <section id="resultados" class="bg-white p-6 rounded shadow">
             <div class="border-b pb-4 mb-4">
-                <h2 class="text-lg font-bold text-gray-800">2. Resultados da Análise</h2>
+            	<h2 class="text-lg font-bold text-gray-800">2. Resultados da Análise</h2>
             </div>
             <div id="resultados-conteudo" class="text-center text-gray-500">
-                <p>Aguardando a verificação...</p>
+            	<p>Aguardando a verificação...</p>
             </div>
         </section>
     </div>
@@ -234,37 +234,37 @@
   let chartSituacao = null, chartAno = null, chartPrazo = null;
   let termoBuscaUniversal = "";
   let _onAuthSuccess = null; // Callback de autenticação
-  const fiscaisCFISCON_EXIBIVEL = [ { norm: "CARMEN LUCIA ULGUIM CHAGAS PADOIN", exib: "Carmen Lucia Ulguim Chagas Padoin" }, { norm: "MARCIA BEHEREGARAY ARGOLLO MENDES", exib: "Marcia Beheregaray Argollo Mendes" }, { norm: "MAURICIO LEANDRO BORGES ROSA", exib: "Mauricio Leandro Borges Rosa" }, { norm: "OTAVIO DA SILVA AFONSO", exib: "Otavio da Silva Afonso" }, { norm: "ARIADNE SILVEIRA TUPY ASSU", exib: "Ariadne Silveira Tupy Assu" }, { norm: "FERNANDA DA ROSA PEDERNEiras", exib: "Fernanda Da Rosa Pederneiras" }, { norm: "FELIPE PAIVA CURI", exib: "Felipe Paiva Curi" } ];
+  const fiscaisCFISCON_EXIBIVEL = [ { norm: "CARMEN LUCIA ULGUIM CHAGAS PADOIN", exib: "Carmen Lucia Ulguim Chagas Padoin" }, { norm: "MARCIA BEHEREGARAY ARGOLLO MENDES", exib: "Marcia Beheregaray Argollo Mendes" }, { norm: "MAURICIO LEANDRO BORGES ROSA", exib: "Mauricio Leandro Borges Rosa" }, { norm: "OTAVIO DA SILVA AFONSO", exib: "Otavio da Silva Afonso" }, { norm: "ARIADNE SILVEIRA TUPY ASSU", exib: "Ariadne Silveira Tupy Assu" }, { norm: "FERNANDA DA ROSA PEDERNEIRAS", exib: "Fernanda Da Rosa Pederneiras" }, { norm: "FELIPE PAIVA CURI", exib: "Felipe Paiva Curi" } ];
   const CRITERIOS_SUGERIDOS = [ { id: 'NProcesso', label: 'N° Processo', checked: true }, { id: 'AnoProcesso', label: 'Ano Processo', checked: true }, { id: 'Contratado', label: 'Contratado', checked: true }, { id: 'CPFCNPJ', label: 'CPF/CNPJ', checked: false }, { id: 'Objeto', label: 'Objeto', checked: true }, { id: 'NContrato', label: 'N° Contrato', checked: false }, { id: 'AnoContrato', label: 'Ano Contrato', checked: false }, { id: 'InicioVigencia', label: 'Início Vigência', checked: false }, ];
  
   const colunaMap = { 'rowid': 'RowID', 'instrumento': 'Instrumento', 'n contrato': 'NContrato', 'nº contrato': 'NContrato', 'ano contrato': 'AnoContrato', 'contratado': 'Contratado', 'cpfcnpj': 'CPFCNPJ', 'descricao do objeto': 'DescricaoDoObjeto', 'valor contrato': 'ValorContrato', 'n ter aditivo apostilamento': 'NTerAditivoApostilamento', 'valor com alteracoes': 'ValorComAlteracoes', 'assinatura': 'Assinatura', 'inicio vigencia': 'InicioVigencia', 'final vigencia': 'FinalVigencia', 'situacao': 'Situacao', 'n processo': 'NProcesso', 'nº processo': 'NProcesso', 'ano processo': 'AnoProcesso', 'gestores': 'Gestores', 'natureza objeto': 'NaturezaObjeto', 'objeto': 'Objeto', 'suplentes': 'Suplentes', 'fiscais': 'Fiscais', 'prazo': 'Prazo', 'prazo maximo vigencia': 'PrazoMaximoVigencia', 'prorrogacao prazo': 'ProrogacaoPrazo', 'lei': 'Lei', 'obs': 'OBS' };
   const jsKeyToOriginalHeaderMap = { 'RowID': 'RowID', 'Instrumento': 'Instrumento', 'NContrato': 'N° Contrato', 'AnoContrato': 'Ano Contrato', 'Contratado': 'Contratado', 'CPFCNPJ': 'CPF/CNPJ', 'DescricaoDoObjeto': 'Descrição do Objeto', 'ValorContrato': 'Valor Contrato', 'NTerAditivoApostilamento': 'Nº Ter. Aditivo Apostilamento', 'ValorComAlteracoes': 'Valor com Alterações', 'Assinatura': 'Assinatura', 'InicioVigencia': 'Início Vigência', 'FinalVigencia': 'Final Vigência', 'Situacao': 'Situação', 'NProcesso': 'N° Processo', 'AnoProcesso': 'Ano Processo', 'Gestores': 'Gestor(es)', 'NaturezaObjeto': 'Natureza Objeto', 'Objeto': 'Objeto', 'Suplentes': 'Suplente(s)', 'Fiscais': 'Fiscal(is)', 'Prazo': 'Prazo', 'PrazoMaximoVigencia': 'Prazo Máximo Vigência', 'ProrogacaoPrazo': 'Prorrogação Prazo', 'Lei': 'Lei', 'OBS': 'OBS:' };
   // --- FUNÇÕES DE AUTENTICAÇÃO E NOTIFICAÇÃO ---
   function requestPassword(onSuccessCallback) {
-    if (sessionStorage.getItem('isAdminAuthenticated') === 'true') {
-        if(typeof onSuccessCallback === 'function') onSuccessCallback();
-        return;
-    }
-    _onAuthSuccess = onSuccessCallback;
-    $('#passwordInput').val('');
-    $('#passwordError').addClass('hidden');
-    $('#passwordModal').removeClass('hidden');
-    $('#passwordInput').focus();
+  	if (sessionStorage.getItem('isAdminAuthenticated') === 'true') {
+  		if(typeof onSuccessCallback === 'function') onSuccessCallback();
+  		return;
+  	}
+  	_onAuthSuccess = onSuccessCallback;
+  	$('#passwordInput').val('');
+  	$('#passwordError').addClass('hidden');
+  	$('#passwordModal').removeClass('hidden');
+  	$('#passwordInput').focus();
   }
   function showNotification(message, type = 'success') {
-    const notification = $('#notification');
-    $('#notification-message').text(message);
-   
-    notification.removeClass('bg-green-500 bg-red-500');
-    if (type === 'error') {
-      notification.addClass('bg-red-500');
-    } else {
-      notification.addClass('bg-green-500');
-    }
-    notification.removeClass('hidden');
-    setTimeout(() => {
-      notification.addClass('hidden');
-    }, 3000); // Oculta após 3 segundos
+  	const notification = $('#notification');
+  	$('#notification-message').text(message);
+  	
+  	notification.removeClass('bg-green-500 bg-red-500');
+  	if (type === 'error') {
+  		notification.addClass('bg-red-500');
+  	} else {
+  		notification.addClass('bg-green-500');
+  	}
+  	notification.removeClass('hidden');
+  	setTimeout(() => {
+  		notification.addClass('hidden');
+  	}, 3000); // Oculta após 3 segundos
   }
   // --- FUNÇÕES AUXILIARES GERAIS ---
   function normalizeCol(str) { return (str||'').normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").replace(/^\s+|\s+$/g, "").replace(/[^a-zA-Z0-9 ]/g, "").toLowerCase(); }
@@ -287,416 +287,411 @@
   function mostrarFormularioEdicao(contrato) { currentEditingContract = contrato; $('#modalTitulo').text(`Editando Contrato: ${contrato.NContrato || ''}`); preencherFormulario(contrato); }
   function mostrarFormularioNovoContrato() { currentEditingContract = null; $('#modalTitulo').text('Adicionar Novo Contrato'); const novoContratoVazio = todosCabecalhos.reduce((acc, header) => { acc[header] = ''; return acc; }, {}); preencherFormulario(novoContratoVazio); }
   function preencherFormulario(contrato) {
-    const formFields = $('#form-fields');
-    let html = '';
-    const camposIgnorados = ['RowID', 'originalIndex'];
-    todosCabecalhos.forEach(jsKey => {
-        if (camposIgnorados.includes(jsKey)) return;
-        const originalHeader = jsKeyToOriginalHeaderMap[jsKey] || jsKey;
-        const valor = contrato[jsKey] ?? '';
-        let inputType = 'text';
-        let inputValue = valor;
-        let extras = '';
-        if (['InicioVigencia', 'FinalVigencia', 'Assinatura'].includes(jsKey)) {
-            inputType = 'date';
-            const parsed = parseDate(valor);
-            inputValue = parsed ? new Date(parsed.getTime() - (parsed.getTimezoneOffset() * 60000)).toISOString().split('T')[0] : '';
-        } else if (['ValorContrato', 'ValorComAlteracoes'].includes(jsKey)) {
-            inputType = 'text'; // CORREÇÃO: Usar texto para aceitar vírgula
-            extras = 'placeholder="Ex: 20252,85"';
-            let numericValue = parseFloat(String(valor).replace(',', '.'));
-            inputValue = isNaN(numericValue) ? '' : numericValue.toString().replace('.', ','); // Mostra com vírgula no form
-        } else if (jsKey === 'Prazo') {
-            extras = 'readonly placeholder="Calculado automaticamente"';
-            inputValue = prazoMeses(contrato.InicioVigencia, contrato.FinalVigencia);
-        }
-        html += `<div><label for="edit-${jsKey}" class="block text-xs font-medium text-gray-700 mb-1">${originalHeader}</label><input type="${inputType}" id="edit-${jsKey}" name="${jsKey}" value="${inputValue}" class="form-input" ${extras}></div>`;
-    });
-    formFields.html(html);
-    $('#modal-display-view').addClass('hidden');
-    $('#modal-edit-form').removeClass('hidden');
-    $('#modalDetalhes').removeClass('hidden');
+  	const formFields = $('#form-fields');
+  	let html = '';
+  	const camposIgnorados = ['RowID', 'originalIndex'];
+  	todosCabecalhos.forEach(jsKey => {
+  		if (camposIgnorados.includes(jsKey)) return;
+  		const originalHeader = jsKeyToOriginalHeaderMap[jsKey] || jsKey;
+  		const valor = contrato[jsKey] ?? '';
+  		let inputType = 'text';
+  		let inputValue = valor;
+  		let extras = '';
+  		if (['InicioVigencia', 'FinalVigencia', 'Assinatura'].includes(jsKey)) {
+  			inputType = 'date';
+  			const parsed = parseDate(valor);
+  			inputValue = parsed ? new Date(parsed.getTime() - (parsed.getTimezoneOffset() * 60000)).toISOString().split('T')[0] : '';
+  		} else if (['ValorContrato', 'ValorComAlteracoes'].includes(jsKey)) {
+  			inputType = 'text'; // CORREÇÃO: Usar texto para aceitar vírgula
+  			extras = 'placeholder="Ex: 20252,85"';
+  			let numericValue = parseFloat(String(valor).replace(',', '.'));
+  			inputValue = isNaN(numericValue) ? '' : numericValue.toString().replace('.', ','); // Mostra com vírgula no form
+  		} else if (jsKey === 'Prazo') {
+  			extras = 'readonly placeholder="Calculado automaticamente"';
+  			inputValue = prazoMeses(contrato.InicioVigencia, contrato.FinalVigencia);
+  		}
+  		html += `<div><label for="edit-${jsKey}" class="block text-xs font-medium text-gray-700 mb-1">${originalHeader}</label><input type="${inputType}" id="edit-${jsKey}" name="${jsKey}" value="${inputValue}" class="form-input" ${extras}></div>`;
+  	});
+  	formFields.html(html);
+  	$('#modal-display-view').addClass('hidden');
+  	$('#modal-edit-form').removeClass('hidden');
+  	$('#modalDetalhes').removeClass('hidden');
   }
   function salvarAlteracoes(event) {
-    event.preventDefault();
-    showSaving(true);
-    const formData = new FormData(event.target);
-    const dataFromForm = Object.fromEntries(formData.entries());
-    // CORREÇÃO: "Limpa" os valores de moeda antes de enviar
-    const currencyFields = ['ValorContrato', 'ValorComAlteracoes'];
-    currencyFields.forEach(jsKey => {
-        if (dataFromForm[jsKey]) {
-            // Remove pontos de milhar, depois troca a vírgula decimal por ponto
-            dataFromForm[jsKey] = dataFromForm[jsKey].replace(/\./g, '').replace(',', '.');
-        }
-    });
-    // Traduz as chaves JS de volta para os nomes originais das colunas
-    const dataParaEnviar = {};
-    for (const jsKey in dataFromForm) {
-        const originalKey = jsKeyToOriginalHeaderMap[jsKey];
-        if (originalKey) {
-            dataParaEnviar[originalKey] = dataFromForm[jsKey];
-        }
-    }
-   
-    // Calcula o prazo automaticamente
-    if (dataFromForm.InicioVigencia && dataFromForm.FinalVigencia) {
-        dataParaEnviar['Prazo'] = prazoMeses(dataFromForm.InicioVigencia, dataFromForm.FinalVigencia);
-    }
-    // Reformatar datas de YYYY-MM-DD para DD/MM/YYYY para a planilha
-    const dateFieldsJsKeys = ['InicioVigencia', 'FinalVigencia', 'Assinatura'];
-    dateFieldsJsKeys.forEach(jsKey => {
-        const originalKey = jsKeyToOriginalHeaderMap[jsKey];
-        if (originalKey && dataParaEnviar[originalKey] && /^\d{4}-\d{2}-\d{2}$/.test(dataParaEnviar[originalKey])) {
-            const [y, m, d] = dataParaEnviar[originalKey].split('-');
-            dataParaEnviar[originalKey] = `${d}/${m}/${y}`;
-        }
-    });
-    const isNew = currentEditingContract === null;
-    const payload = { action: isNew ? 'create' : 'update', data: dataParaEnviar };
-    if (!isNew) { payload.rowId = currentEditingContract.RowID; }
-    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
-    .catch(console.error);
-    setTimeout(() => {
-        $('#modalDetalhes').addClass('hidden');
-        showSaving(false);
-        showNotification('Solicitação enviada! A planilha será atualizada.');
-        setTimeout(carregarContratosPlanilha, 2000);
-    }, 1500);
+  	event.preventDefault();
+  	showSaving(true);
+  	const formData = new FormData(event.target);
+  	const dataFromForm = Object.fromEntries(formData.entries());
+  	// CORREÇÃO: "Limpa" os valores de moeda antes de enviar
+  	const currencyFields = ['ValorContrato', 'ValorComAlteracoes'];
+  	currencyFields.forEach(jsKey => {
+  		if (dataFromForm[jsKey]) {
+  			// Remove pontos de milhar, depois troca a vírgula decimal por ponto
+  			dataFromForm[jsKey] = dataFromForm[jsKey].replace(/\./g, '').replace(',', '.');
+  		}
+  	});
+  	// Traduz as chaves JS de volta para os nomes originais das colunas
+  	const dataParaEnviar = {};
+  	for (const jsKey in dataFromForm) {
+  		const originalKey = jsKeyToOriginalHeaderMap[jsKey];
+  		if (originalKey) {
+  			dataParaEnviar[originalKey] = dataFromForm[jsKey];
+  		}
+  	}
+  	
+  	// Calcula o prazo automaticamente
+  	if (dataFromForm.InicioVigencia && dataFromForm.FinalVigencia) {
+  		dataParaEnviar['Prazo'] = prazoMeses(dataFromForm.InicioVigencia, dataFromForm.FinalVigencia);
+  	}
+  	// Reformatar datas de YYYY-MM-DD para DD/MM/YYYY para a planilha
+  	const dateFieldsJsKeys = ['InicioVigencia', 'FinalVigencia', 'Assinatura'];
+  	dateFieldsJsKeys.forEach(jsKey => {
+  		const originalKey = jsKeyToOriginalHeaderMap[jsKey];
+  		if (originalKey && dataParaEnviar[originalKey] && /^\d{4}-\d{2}-\d{2}$/.test(dataParaEnviar[originalKey])) {
+  			const [y, m, d] = dataParaEnviar[originalKey].split('-');
+  			dataParaEnviar[originalKey] = `${d}/${m}/${y}`;
+  		}
+  	});
+  	const isNew = currentEditingContract === null;
+  	const payload = { action: isNew ? 'create' : 'update', data: dataParaEnviar };
+  	if (!isNew) { payload.rowId = currentEditingContract.RowID; }
+  	fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
+  	.catch(console.error);
+  	setTimeout(() => {
+  		$('#modalDetalhes').addClass('hidden');
+  		showSaving(false);
+  		showNotification('Solicitação enviada! A planilha será atualizada.');
+  		setTimeout(carregarContratosPlanilha, 2000);
+  	}, 1500);
   }
-   function solicitarExclusao() {
-    requestPassword(() => {
-      $('#confirmDeleteModal').removeClass('hidden');
-    });
+   function solicitarExclusao() {
+  	requestPassword(() => {
+  		$('#confirmDeleteModal').removeClass('hidden');
+  	});
   }
   function excluirContrato() {
-    if (!currentEditingContract || !currentEditingContract.RowID) {
-      showNotification("Erro: Contrato inválido ou RowID não encontrado.", 'error');
-      return;
-    }
-    showSaving(true, "Excluindo...");
-    const payload = {
-      action: 'delete',
-      rowId: currentEditingContract.RowID
-    };
-    fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
-    .catch(console.error);
-    // Otimista: remove da UI imediatamente
-    setTimeout(() => {
-      $('#modalDetalhes').addClass('hidden');
-      $('#confirmDeleteModal').addClass('hidden');
-      $('#compareModal').addClass('hidden');
-      const index = contratos.findIndex(c => c.originalIndex === currentEditingContract.originalIndex);
-      if (index > -1) {
-        contratos.splice(index, 1);
-      }
-      aplicarFiltros();
-      if ($('#navDuplicados').hasClass('active')) {
-        verificarDuplicados();
-      }
-     
-      showSaving(false);
-      showNotification('Contrato excluído com sucesso!');
-    }, 1000);
+  	if (!currentEditingContract || !currentEditingContract.RowID) {
+  		showNotification("Erro: Contrato inválido ou RowID não encontrado.", 'error');
+  		return;
+  	}
+  	showSaving(true, "Excluindo...");
+  	const payload = {
+  		action: 'delete',
+  		rowId: currentEditingContract.RowID
+  	};
+  	fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) })
+  	.catch(console.error);
+  	// Otimista: remove da UI imediatamente
+  	setTimeout(() => {
+  		$('#modalDetalhes').addClass('hidden');
+  		$('#confirmDeleteModal').addClass('hidden');
+  		$('#compareModal').addClass('hidden');
+  		const index = contratos.findIndex(c => c.originalIndex === currentEditingContract.originalIndex);
+  		if (index > -1) {
+  			contratos.splice(index, 1);
+  		}
+  		aplicarFiltros();
+  		if ($('#navDuplicados').hasClass('active')) {
+  			verificarDuplicados();
+  		}
+  		
+  		showSaving(false);
+  		showNotification('Contrato excluído com sucesso!');
+  	}, 1000);
   }
   function processData(data, headers) {
-    const validData = data.filter(row => row.RowID && row.RowID.trim() !== '');
-   
-    todosCabecalhos = [];
-    const seenJsKeys = new Set();
-    headers.forEach(originalHeader => {
-        const normalized = normalizeCol(originalHeader);
-        const jsKey = colunaMap[normalized] || originalHeader.trim().replace(/[^a-zA-Z0-9]/g, '');
-        if (!seenJsKeys.has(jsKey)) {
-            todosCabecalhos.push(jsKey);
-            seenJsKeys.add(jsKey);
-        }
-    });
-    contratos = validData.map((row, index) => {
-      let obj = { originalIndex: index };
-      headers.forEach(header => {
-        const normalized = normalizeCol(header);
-        const jsKey = colunaMap[normalized] || header.trim().replace(/[^a-zA-Z0-9]/g, '');
-        obj[jsKey] = row[header] ? String(row[header]).trim() : row[header];
-      });
-     
-      // --- ALTERAÇÃO APLICADA AQUI ---
-      // Usa a função de agrupamento para verificar o status que veio da planilha.
-      const grupoSituacaoPlanilha = agruparSituacao(obj.Situacao);
+  	const validData = data.filter(row => row.RowID && row.RowID.trim() !== '');
+  	
+  	todosCabecalhos = [];
+  	const seenJsKeys = new Set();
+  	headers.forEach(originalHeader => {
+  		const normalized = normalizeCol(originalHeader);
+  		const jsKey = colunaMap[normalized] || originalHeader.trim().replace(/[^a-zA-Z0-9]/g, '');
+  		if (!seenJsKeys.has(jsKey)) {
+  			todosCabecalhos.push(jsKey);
+  			seenJsKeys.add(jsKey);
+  		}
+  	});
+  	contratos = validData.map((row, index) => {
+  		let obj = { originalIndex: index };
+  		headers.forEach(header => {
+  			const normalized = normalizeCol(header);
+  			const jsKey = colunaMap[normalized] || header.trim().replace(/[^a-zA-Z0-9]/g, '');
+  			obj[jsKey] = row[header] ? String(row[header]).trim() : row[header];
+  		});
+  		
+  		const grupoSituacaoPlanilha = agruparSituacao(obj.Situacao);
 
-      // SÓ recalcula a situação se o contrato NÃO estiver manualmente definido como "Encerrado".
-      if (grupoSituacaoPlanilha !== 'Encerrado') {
-        const dias = diasAteVencimento(obj.FinalVigencia);
-        if (dias !== null) { // Apenas se houver uma data de vigência válida
-          if (dias < 0) {
-            obj.Situacao = 'Expirado'; // Se a data passou, fica "Expirado"
-          } else {
-            obj.Situacao = 'Vigente'; // Senão, continua "Vigente"
-          }
-        }
-      }
-      // Se a situação for "Encerrado", nada no bloco acima é executado e o valor original é mantido.
-      // --- FIM DA ALTERAÇÃO ---
-      
-      return obj;
-    });
-    contratosFiltrados = [...contratos];
-    atualizarFiltros();
-    aplicarFiltros();
+  		if (grupoSituacaoPlanilha !== 'Encerrado') {
+  			const dias = diasAteVencimento(obj.FinalVigencia);
+  			if (dias !== null) {
+  				if (dias < 0) {
+  					obj.Situacao = 'Expirado';
+  				} else {
+  					obj.Situacao = 'Vigente';
+  				}
+  			}
+  		}
+  		
+  		return obj;
+  	});
+  	contratosFiltrados = [...contratos];
+  	atualizarFiltros();
+  	aplicarFiltros();
   }
   function carregarContratosPlanilha() { showLoading(true); const url = `${SHEET_CSV_URL}&t=${new Date().getTime()}`; Papa.parse(url, { download: true, header: true, skipEmptyLines: true, complete: results => { if (results.data && results.data.length > 0) { processData(results.data, results.meta.fields); } else { showNotification('Não foi possível carregar dados da planilha.', 'error'); } showLoading(false); }, error: err => { showLoading(false); showNotification('Erro ao carregar dados da planilha!', 'error'); console.error(err); } }); }
   // --- FILTROS E LÓGICA DA TABELA PRINCIPAL ---
   function aplicarFiltros() {
-    const ano = $('#filtroAnoContrato').val();
-    const vig = $('#filtroFinalVigencia').val();
-    const tipoObjeto = $('#filtroTipoObjeto').val();
-    const fiscal = $('#filtroFiscal').val();
-    const situacao = $('#filtroSituacao').val();
-   
-    const normalizeSearch = (str) => (str || '').toString().toLowerCase().replace(/[.\-\/]/g, '');
-    const termoNormalizado = normalizeSearch(termoBuscaUniversal);
-    contratosFiltrados = contratos.filter(c => {
-        if (termoBuscaUniversal && !Object.values(c).some(val => normalizeSearch(val).includes(termoNormalizado))) return false;
-        if (ano && String(c.AnoContrato ?? '') !== ano) return false;
-        if (tipoObjeto && mapearTipoObjeto(c.Objeto) !== tipoObjeto) return false;
-        if (fiscal && !(c.Fiscais ?? '').split(/[,;\n]+/).map(f => limparPrefixoNumero(f).trim()).includes(fiscal)) return false;
-        if (situacao && agruparSituacao(c.Situacao) !== situacao) return false;
-        if (vig) { let dias = diasAteVencimento(c.FinalVigencia); if (dias === null || dias < 0 || dias > Number(vig)) return false; }
-        return true;
-    });
-    atualizarTabela();
-    atualizarAvisosVencimento();
-    renderPainelFiscaisCFISCON();
-    desenharGraficos();
+  	const ano = $('#filtroAnoContrato').val();
+  	const vig = $('#filtroFinalVigencia').val();
+  	const tipoObjeto = $('#filtroTipoObjeto').val();
+  	const fiscal = $('#filtroFiscal').val();
+  	const situacao = $('#filtroSituacao').val();
+  	
+  	const normalizeSearch = (str) => (str || '').toString().toLowerCase().replace(/[.\-\/]/g, '');
+  	const termoNormalizado = normalizeSearch(termoBuscaUniversal);
+  	contratosFiltrados = contratos.filter(c => {
+  		if (termoBuscaUniversal && !Object.values(c).some(val => normalizeSearch(val).includes(termoNormalizado))) return false;
+  		if (ano && String(c.AnoContrato ?? '') !== ano) return false;
+  		if (tipoObjeto && mapearTipoObjeto(c.Objeto) !== tipoObjeto) return false;
+  		if (fiscal && !(c.Fiscais ?? '').split(/[,;\n]+/).map(f => limparPrefixoNumero(f).trim()).includes(fiscal)) return false;
+  		if (situacao && agruparSituacao(c.Situacao) !== situacao) return false;
+  		if (vig) { let dias = diasAteVencimento(c.FinalVigencia); if (dias === null || dias < 0 || dias > Number(vig)) return false; }
+  		return true;
+  	});
+  	atualizarTabela();
+  	atualizarAvisosVencimento();
+  	renderPainelFiscaisCFISCON();
+  	desenharGraficos();
   }
   function fillSelectOptions(selectId, array, field, multiSplit = false) { const select = $(`#${selectId}`); const seen = new Set(); array.forEach(item => { let values = multiSplit ? (item[field] ?? '').split(/[,;\n]+/) : [item[field]]; values.forEach(v => { const cleaned = multiSplit ? limparPrefixoNumero(v).trim() : String(v).trim(); if (cleaned) seen.add(cleaned); }); }); const options = Array.from(seen).sort((a,b) => a.localeCompare(b)); select.html('<option value="">Todos</option>' + options.map(o => `<option value="${o}">${o}</option>`).join('')); }
   function fillSelectOptionsSituacao(selectId, array) { const select = $(`#${selectId}`); const seen = new Set(); array.forEach(c => { const grp = agruparSituacao(c.Situacao); if (grp) seen.add(grp); }); const values = ["Vigente", "Expirado", "Encerrado", "Não Vigente"].filter(v => seen.has(v)); select.html('<option value="">Todas</option>' + values.map(val => `<option value="${val}">${val}</option>`).join('')); }
   function atualizarFiltros() { fillSelectOptions('filtroAnoContrato', contratos, 'AnoContrato'); fillSelectOptions('filtroFiscal', contratos, 'Fiscais', true); fillSelectOptionsSituacao('filtroSituacao', contratos); }
   function atualizarTabela() { const columns = [ { title: "N° Contrato", data: "NContrato" }, { title: "Ano", data: "AnoContrato" }, { title: "Contratado", data: "Contratado" }, { title: "Final Vigência", data: "FinalVigencia", render: (data) => formatDateBR(data) }, { title: "Vence em", data: "FinalVigencia", render: (data) => formatDiasVencimento(data) }, { title: "Situação", data: "Situacao" }, { title: "", data: null, orderable: false, render: (data, type, row) => `<button class="ver-detalhes btn text-xs px-2 py-1 rounded" data-idx="${row.originalIndex}">Detalhes</button>` } ]; if ($.fn.DataTable.isDataTable('#tabelaContratos')) { tabela.clear().rows.add(contratosFiltrados).draw(); } else { tabela = $('#tabelaContratos').DataTable({ data: contratosFiltrados, columns: columns, pageLength: 10, lengthMenu: [10, 25, 50, 100], language: { url: "//cdn.datatables.net/plug-ins/1.13.7/i18n/pt-BR.json" }, createdRow: function(row, data) { let dias = diasAteVencimento(data.FinalVigencia); if (dias !== null && dias >= 0 && dias < 30) { $(row).css('background-color', '#FFCCCC'); } else if (dias !== null && dias >= 30 && dias < 60) { $(row).css('background-color', '#FFF9CC'); } else if (dias !== null && dias >= 60) { $(row).css('background-color', '#D1FFD1'); } if (contratoTemFiscalCFISCON(data)) { $(row).css('font-weight', 'bold').css('border-left', '4px solid #1E4069'); } } }); } }
   function mostrarDetalhesContrato(contrato) {
-    currentEditingContract = contrato;
-    let html = `<table class="min-w-full text-left border border-gray-200 text-xs"><tbody>`;
-   
-    todosCabecalhos.forEach(jsKey => {
-        const originalHeader = jsKeyToOriginalHeaderMap[jsKey] || jsKey;
-        const v = contrato[jsKey];
-        if (jsKey === 'originalIndex') return;
-        let displayValue = v;
-        if (['FinalVigencia', 'InicioVigencia', 'Assinatura'].includes(jsKey)) {
-            displayValue = formatDateBR(v);
-        } else if (['ValorContrato', 'ValorComAlteracoes'].includes(jsKey)) {
-            displayValue = formatCurrencyBR(v);
-        }
-        html += `<tr class="border-b"><th class="py-1 px-2 bg-gray-100 font-semibold w-40">${originalHeader}</th><td class="py-1 px-2">${displayValue ?? ''}</td></tr>`;
-    });
-    html += `<tr><th class="py-1 px-2 bg-gray-100 font-semibold w-40">Prazo Calculado</th><td class="py-1 px-2">${prazoMeses(contrato.InicioVigencia, contrato.FinalVigencia)}</td></tr>`;
-    html += `</tbody></table>`;
-    $('#modalTitulo').text(`Detalhes do Contrato: ${contrato.NContrato || ''}`);
-    $('#modalConteudo').html(html);
-    $('#modal-edit-form').addClass('hidden');
-    $('#modal-display-view').removeClass('hidden');
-    $('#modalDetalhes').removeClass('hidden');
+  	currentEditingContract = contrato;
+  	let html = `<table class="min-w-full text-left border border-gray-200 text-xs"><tbody>`;
+  	
+  	todosCabecalhos.forEach(jsKey => {
+  		const originalHeader = jsKeyToOriginalHeaderMap[jsKey] || jsKey;
+  		const v = contrato[jsKey];
+  		if (jsKey === 'originalIndex') return;
+  		let displayValue = v;
+  		if (['FinalVigencia', 'InicioVigencia', 'Assinatura'].includes(jsKey)) {
+  			displayValue = formatDateBR(v);
+  		} else if (['ValorContrato', 'ValorComAlteracoes'].includes(jsKey)) {
+  			displayValue = formatCurrencyBR(v);
+  		}
+  		html += `<tr class="border-b"><th class="py-1 px-2 bg-gray-100 font-semibold w-40">${originalHeader}</th><td class="py-1 px-2">${displayValue ?? ''}</td></tr>`;
+  	});
+  	html += `<tr><th class="py-1 px-2 bg-gray-100 font-semibold w-40">Prazo Calculado</th><td class="py-1 px-2">${prazoMeses(contrato.InicioVigencia, contrato.FinalVigencia)}</td></tr>`;
+  	html += `</tbody></table>`;
+  	$('#modalTitulo').text(`Detalhes do Contrato: ${contrato.NContrato || ''}`);
+  	$('#modalConteudo').html(html);
+  	$('#modal-edit-form').addClass('hidden');
+  	$('#modal-display-view').removeClass('hidden');
+  	$('#modalDetalhes').removeClass('hidden');
   }
  
   // --- PAINEL C-FISCON E AVISOS ---
   function renderPainelFiscaisCFISCON() { let html = `<div class="mb-6 p-4 bg-[#E6ECEF] border-l-4 border-[#1E4069] rounded shadow"><strong>Contratos C-FISCON:</strong><div class="flex flex-wrap gap-2 mt-2">`; fiscaisCFISCON_EXIBIVEL.forEach(obj => { html += `<button class="btn-fiscal-cfiscon bg-[#1E4069] hover:bg-[#4DA8DA] text-white px-3 py-1 rounded text-xs font-semibold" data-nome="${obj.norm}">${obj.exib}</button>`; }); html += `</div><div id="cfiscon-contratos-lista" class="mt-4 hidden"></div></div>`; $('#painelFiscaisCFISCON').html(html); }
   function mostrarContratosFiscalCFISCON(normFiscal) {
-    const contratosDoFiscal = contratos.filter(c => (c.Fiscais ?? '').split(/[,;\n]+/).some(f => normalizarNomeFiscal(limparPrefixoNumero(f)) === normFiscal));
-    let html = `<div class="mb-2"><span class="font-bold text-[#1E4069]">${(fiscaisCFISCON_EXIBIVEL.find(f => f.norm === normFiscal) || {}).exib || normFiscal}</span><button class="ml-4 px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 close-cfiscon-contratos" title="Fechar">Fechar</button></div>`;
-    if (contratosDoFiscal.length === 0) {
-        html += `<div>Nenhum contrato encontrado para este fiscal.</div>`;
-    } else {
-        html += `<div class="overflow-x-auto"><table class="min-w-full text-xs border rounded mini-table"><thead class="bg-[#E6ECEF]"><tr><th class="px-2 py-1">N° Contrato</th><th class="px-2 py-1">Contratado</th><th class="px-2 py-1">Final Vigência</th><th class="px-2 py-1">Vence em</th><th class="px-2 py-1"></th></tr></thead><tbody>`;
-        contratosDoFiscal.forEach(c => {
-            let dias = diasAteVencimento(c.FinalVigencia);
-            let bgColor = '';
-            if (dias !== null && dias >= 0 && dias < 30) {
-                bgColor = 'background-color:#FFCCCC;';
-            } else if (dias !== null && dias >= 30 && dias < 60) {
-                bgColor = 'background-color:#FFF9CC;';
-            } else if (dias !== null && dias >= 60) {
-                bgColor = 'background-color:#D1FFD1;';
-            }
-            html += `<tr style="${bgColor}">
-                <td class="px-2 py-1">${c.NContrato || ''}</td>
-                <td class="px-2 py-1">${c.Contratado || ''}</td>
-                <td class="px-2 py-1">${formatDateBR(c.FinalVigencia) || ''}</td>
-                <td class="px-2 py-1">${formatDiasVencimento(c.FinalVigencia)}</td>
-                <td class="px-2 py-1 text-center"><button class="ver-detalhes-mini btn text-xs px-2 py-1 rounded" data-idx="${c.originalIndex}" title="Ver detalhes">Detalhes</button></td>
-            </tr>`;
-        });
-        html += `</tbody></table></div>`;
-    }
-    const listaDiv = $('#cfiscon-contratos-lista');
-    listaDiv.html(html).removeClass('hidden');
+  	const contratosDoFiscal = contratos.filter(c => (c.Fiscais ?? '').split(/[,;\n]+/).some(f => normalizarNomeFiscal(limparPrefixoNumero(f)) === normFiscal));
+  	let html = `<div class="mb-2"><span class="font-bold text-[#1E4069]">${(fiscaisCFISCON_EXIBIVEL.find(f => f.norm === normFiscal) || {}).exib || normFiscal}</span><button class="ml-4 px-2 py-1 text-xs rounded bg-gray-200 hover:bg-gray-300 close-cfiscon-contratos" title="Fechar">Fechar</button></div>`;
+  	if (contratosDoFiscal.length === 0) {
+  		html += `<div>Nenhum contrato encontrado para este fiscal.</div>`;
+  	} else {
+  		html += `<div class="overflow-x-auto"><table class="min-w-full text-xs border rounded mini-table"><thead class="bg-[#E6ECEF]"><tr><th class="px-2 py-1">N° Contrato</th><th class="px-2 py-1">Contratado</th><th class="px-2 py-1">Final Vigência</th><th class="px-2 py-1">Vence em</th><th class="px-2 py-1"></th></tr></thead><tbody>`;
+  		contratosDoFiscal.forEach(c => {
+  			let dias = diasAteVencimento(c.FinalVigencia);
+  			let bgColor = '';
+  			if (dias !== null && dias >= 0 && dias < 30) {
+  				bgColor = 'background-color:#FFCCCC;';
+  			} else if (dias !== null && dias >= 30 && dias < 60) {
+  				bgColor = 'background-color:#FFF9CC;';
+  			} else if (dias !== null && dias >= 60) {
+  				bgColor = 'background-color:#D1FFD1;';
+  			}
+  			html += `<tr style="${bgColor}">
+  				<td class="px-2 py-1">${c.NContrato || ''}</td>
+  				<td class="px-2 py-1">${c.Contratado || ''}</td>
+  				<td class="px-2 py-1">${formatDateBR(c.FinalVigencia) || ''}</td>
+  				<td class="px-2 py-1">${formatDiasVencimento(c.FinalVigencia)}</td>
+  				<td class="px-2 py-1 text-center"><button class="ver-detalhes-mini btn text-xs px-2 py-1 rounded" data-idx="${c.originalIndex}" title="Ver detalhes">Detalhes</button></td>
+  			</tr>`;
+  		});
+  		html += `</tbody></table></div>`;
+  	}
+  	const listaDiv = $('#cfiscon-contratos-lista');
+  	listaDiv.html(html).removeClass('hidden');
   }
   function atualizarAvisosVencimento() { let html = ''; const vencendo30 = contratosFiltrados.filter(c => { let dias = diasAteVencimento(c.FinalVigencia); return dias !== null && dias >= 0 && dias < 30; }); const vencendo60 = contratosFiltrados.filter(c => { let dias = diasAteVencimento(c.FinalVigencia); return dias !== null && dias >= 30 && dias < 60; }); html += renderAvisoComMiniTabela("Atenção", "red", vencendo30, "contratos-ate30", "Ver todos os contratos vencendo em até 30 dias"); html += renderAvisoComMiniTabela("Alerta", "yellow", vencendo60, "contratos-ate60", "Ver todos os contratos vencendo em até 60 dias"); $('#avisosVencimento').html(html); }
   function renderAvisoComMiniTabela(titulo, cor, lista, boxId, labelBtn) { if (!lista.length) return ''; let corAviso, corHead; if (cor === 'red') { corAviso = 'bg-red-100 border-red-500 text-red-700'; corHead = 'bg-red-200'; } else { corAviso = 'bg-yellow-100 border-yellow-500 text-yellow-700'; corHead = 'bg-yellow-200'; } let ordenados = [...lista].sort((a, b) => diasAteVencimento(a.FinalVigencia) - diasAteVencimento(b.FinalVigencia)); const criarTabelaHTML = (contratosParaRender) => `<div class="overflow-x-auto mb-2"><table class="mini-table min-w-full text-xs border rounded"><thead class="${corHead}"><tr><th class="px-2 py-1">N° Contrato</th><th class="px-2 py-1">Contratado</th><th class="px-2 py-1">Final Vigência</th><th class="px-2 py-1">Vence em</th><th class="px-2 py-1"></th></tr></thead><tbody>${contratosParaRender.map(c => `<tr ${contratoTemFiscalCFISCON(c) ? 'style="font-weight:bold;border-left:4px solid #1E4069;"' : ''}><td class="px-2 py-1">${c.NContrato || ''}</td><td class="px-2 py-1">${c.Contratado || ''}</td><td class="px-2 py-1">${formatDateBR(c.FinalVigencia)}</td><td class="px-2 py-1">${formatDiasVencimento(c.FinalVigencia)}</td><td class="px-2 py-1 text-center"><button class="ver-detalhes-mini btn text-xs px-2 py-1 rounded" data-idx="${c.originalIndex}">Detalhes</button></td></tr>`).join('')}</tbody></table></div>`; return `<div class="p-4 mb-2 ${corAviso} border-l-4 rounded"><strong>${titulo}:</strong> ${lista.length} contrato(s) vencendo em até <b>${cor === 'red' ? '30' : '60'} dias</b>.</div><div id="${boxId}-mini">${criarTabelaHTML(ordenados.slice(0, 5))}${lista.length > 5 ? `<div class="text-center"><button class="ver-mais-mini bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs" data-box="${boxId}">${labelBtn}</button></div>` : ''}</div><div id="${boxId}-full" class="hidden">${criarTabelaHTML(ordenados)}<div class="text-center"><button class="ver-menos-mini bg-gray-200 hover:bg-gray-300 text-gray-700 px-2 py-1 rounded text-xs" data-box="${boxId}">Ver menos</button></div></div>`; }
   // --- GRÁFICOS E DUPLICADOS ---
   function desenharGraficos() {
-    if (typeof Chart === 'undefined') return;
-    const situacoes = {};
-    contratosFiltrados.forEach(c => {
-        const grupo = agruparSituacao(c.Situacao);
-        if (grupo) situacoes[grupo] = (situacoes[grupo] || 0) + 1;
-    });
-    const sitLabels = ["Vigente", "Expirado", "Encerrado", "Não Vigente"];
-    const sitData = sitLabels.map(label => situacoes[label] || 0);
-    if (chartSituacao) chartSituacao.destroy();
-    chartSituacao = new Chart($('#graficoSituacao'), {
-        type: 'pie',
-        data: {
-            labels: sitLabels,
-            datasets: [{ data: sitData, backgroundColor: ['#1E4069', '#F4A261', '#E63946', '#4DA8DA'] }]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'bottom' }, datalabels: { color: '#fff', font: { weight: 'bold' } } } }
-    });
-    const anos = {};
-    contratosFiltrados.forEach(c => {
-        if (c.AnoContrato) anos[c.AnoContrato] = (anos[c.AnoContrato] || 0) + 1;
-    });
-    const anoLabels = Object.keys(anos).sort();
-    const anoData = anoLabels.map(a => anos[a]);
-    if (chartAno) chartAno.destroy();
-    chartAno = new Chart($('#graficoAno'), {
-        type: 'bar',
-        data: {
-            labels: anoLabels,
-            datasets: [{ label: 'Contratos', data: anoData, backgroundColor: '#1E4069' }]
-        },
-        options: { responsive: true, plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold' } } } }
-    });
-    const faixas = [{ label: 'Até 6 meses', min: 0, max: 6 }, { label: '7 a 12 meses', min: 7, max: 12 }, { label: '13 a 24 meses', min: 13, max: 24 }, { label: '25 a 36 meses', min: 25, max: 36 }, { label: 'Acima de 36 meses', min: 37, max: 999 }];
-    const prazos = [0, 0, 0, 0, 0];
-    contratosFiltrados.forEach(c => {
-        let months = prazoMeses(c.InicioVigencia, c.FinalVigencia).replace(/[^0-9]/g, '');
-        if (months) {
-            for (let i = 0; i < faixas.length; i++) {
-                if (months >= faixas[i].min && months <= faixas[i].max) {
-                    prazos[i]++;
-                    break;
-                }
-            }
-        }
-    });
-    if (chartPrazo) chartPrazo.destroy();
-    chartPrazo = new Chart($('#graficoPrazo'), {
-        type: 'doughnut',
-        data: {
-            labels: faixas.map(f => f.label),
-            datasets: [{ data: prazos, backgroundColor: ['#1E4069', '#4DA8DA', '#00A651', '#F4A261', '#0078A8'] }]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'bottom' }, datalabels: { color: '#fff', font: { weight: 'bold' } } } }
-    });
+  	if (typeof Chart === 'undefined') return;
+  	const situacoes = {};
+  	contratosFiltrados.forEach(c => {
+  		const grupo = agruparSituacao(c.Situacao);
+  		if (grupo) situacoes[grupo] = (situacoes[grupo] || 0) + 1;
+  	});
+  	const sitLabels = ["Vigente", "Expirado", "Encerrado", "Não Vigente"];
+  	const sitData = sitLabels.map(label => situacoes[label] || 0);
+  	if (chartSituacao) chartSituacao.destroy();
+  	chartSituacao = new Chart($('#graficoSituacao'), {
+  		type: 'pie',
+  		data: {
+  			labels: sitLabels,
+  			datasets: [{ data: sitData, backgroundColor: ['#1E4069', '#F4A261', '#E63946', '#4DA8DA'] }]
+  		},
+  		options: { responsive: true, plugins: { legend: { position: 'bottom' }, datalabels: { color: '#fff', font: { weight: 'bold' } } } }
+  	});
+  	const anos = {};
+  	contratosFiltrados.forEach(c => {
+  		if (c.AnoContrato) anos[c.AnoContrato] = (anos[c.AnoContrato] || 0) + 1;
+  	});
+  	const anoLabels = Object.keys(anos).sort();
+  	const anoData = anoLabels.map(a => anos[a]);
+  	if (chartAno) chartAno.destroy();
+  	chartAno = new Chart($('#graficoAno'), {
+  		type: 'bar',
+  		data: {
+  			labels: anoLabels,
+  			datasets: [{ label: 'Contratos', data: anoData, backgroundColor: '#1E4069' }]
+  		},
+  		options: { responsive: true, plugins: { legend: { display: false }, datalabels: { color: '#fff', font: { weight: 'bold' } } } }
+  	});
+  	const faixas = [{ label: 'Até 6 meses', min: 0, max: 6 }, { label: '7 a 12 meses', min: 7, max: 12 }, { label: '13 a 24 meses', min: 13, max: 24 }, { label: '25 a 36 meses', min: 25, max: 36 }, { label: 'Acima de 36 meses', min: 37, max: 999 }];
+  	const prazos = [0, 0, 0, 0, 0];
+  	contratosFiltrados.forEach(c => {
+  		let months = prazoMeses(c.InicioVigencia, c.FinalVigencia).replace(/[^0-9]/g, '');
+  		if (months) {
+  			for (let i = 0; i < faixas.length; i++) {
+  				if (months >= faixas[i].min && months <= faixas[i].max) {
+  					prazos[i]++;
+  					break;
+  				}
+  			}
+  		}
+  	});
+  	if (chartPrazo) chartPrazo.destroy();
+  	chartPrazo = new Chart($('#graficoPrazo'), {
+  		type: 'doughnut',
+  		data: {
+  			labels: faixas.map(f => f.label),
+  			datasets: [{ data: prazos, backgroundColor: ['#1E4069', '#4DA8DA', '#00A651', '#F4A261', '#0078A8'] }]
+  		},
+  		options: { responsive: true, plugins: { legend: { position: 'bottom' }, datalabels: { color: '#fff', font: { weight: 'bold' } } } }
+  	});
   }
   function renderizarCriterios() { const container = $('#criterios-selecao'); container.html(CRITERIOS_SUGERIDOS.map(c => `<label class="flex items-center space-x-2 p-2 rounded hover:bg-gray-100 cursor-pointer"><input type="checkbox" name="criterio" value="${c.id}" class="h-4 w-4 rounded border-gray-300 text-[#1E4069] focus:ring-[#1E4069]" ${c.checked ? 'checked' : ''}><span class="text-sm font-medium text-gray-700">${c.label}</span></label>`).join('')); }
   function verificarDuplicados() { const criteriosSelecionados = Array.from($('input[name="criterio"]:checked')).map(cb => cb.value); if (criteriosSelecionados.length === 0) { showNotification('Selecione pelo menos um critério.', 'error'); return; } showLoading(true, "Verificando..."); const grupos = new Map(); contratos.forEach((contrato) => { const chave = criteriosSelecionados.map(criterio => (contrato[criterio] || '').toString().trim().toLowerCase()).join('||'); if (!chave) return; if (!grupos.has(chave)) grupos.set(chave, []); grupos.get(chave).push(contrato); }); const duplicados = Array.from(grupos.values()).filter(grupo => grupo.length > 1); setTimeout(() => { renderizarResultados(duplicados); showLoading(false); }, 500); }
   function renderizarResultados(grupos) {
-    const container = $('#resultados-conteudo');
-    if (grupos.length === 0) {
-      container.html(`<div class="text-center py-8"><h3 class="mt-2 text-lg font-medium text-gray-900">Nenhum duplicado encontrado!</h3></div>`);
-      return;
-    }
-    let html = `<p class="text-left text-sm text-gray-600 mb-4">Encontrados <strong>${grupos.length}</strong> grupos de contratos duplicados.</p>`;
-    grupos.forEach((grupo, index) => {
-      html += `<div class="border rounded-lg shadow-sm mb-6 overflow-hidden">
-        <div class="bg-gray-50 p-3 border-b flex justify-between items-center">
-          <div>
-            <h4 class="font-bold text-md text-[#1E4069]">${grupo[0].Contratado || `Grupo ${index + 1}`} (${grupo.length} ocorrências)</h4>
-            <p class="text-xs text-gray-500">N° Contrato: ${grupo[0].NContrato || 'N/A'}</p>
-          </div>
-          <button class="comparar-duplicados btn text-xs px-3 py-1 rounded" data-indices='${JSON.stringify(grupo.map(c => c.originalIndex))}'>Comparar</button>
-        </div>
-      </div>`;
-    });
-    container.html(html);
+  	const container = $('#resultados-conteudo');
+  	if (grupos.length === 0) {
+  		container.html(`<div class="text-center py-8"><h3 class="mt-2 text-lg font-medium text-gray-900">Nenhum duplicado encontrado!</h3></div>`);
+  		return;
+  	}
+  	let html = `<p class="text-left text-sm text-gray-600 mb-4">Encontrados <strong>${grupos.length}</strong> grupos de contratos duplicados.</p>`;
+  	grupos.forEach((grupo, index) => {
+  		html += `<div class="border rounded-lg shadow-sm mb-6 overflow-hidden">
+  			<div class="bg-gray-50 p-3 border-b flex justify-between items-center">
+  				<div>
+  					<h4 class="font-bold text-md text-[#1E4069]">${grupo[0].Contratado || `Grupo ${index + 1}`} (${grupo.length} ocorrências)</h4>
+  					<p class="text-xs text-gray-500">N° Contrato: ${grupo[0].NContrato || 'N/A'}</p>
+  				</div>
+  				<button class="comparar-duplicados btn text-xs px-3 py-1 rounded" data-indices='${JSON.stringify(grupo.map(c => c.originalIndex))}'>Comparar</button>
+  			</div>
+  		</div>`;
+  	});
+  	container.html(html);
   }
   function mostrarComparacao(indices) {
-    const container = $('#compare-container');
-    container.html(''); // Limpa o container
-    const contratosParaComparar = indices.map(idx => contratos.find(c => c.originalIndex === idx));
-    if (contratosParaComparar.length < 2) return; // Precisa de pelo menos 2 para comparar
-    const contrato1 = contratosParaComparar[0];
-    const contrato2 = contratosParaComparar[1];
-   
-    let htmlCol1 = '<div class="border rounded p-4">';
-    let htmlCol2 = '<div class="border rounded p-4">';
-    htmlCol1 += `<h4 class="font-bold mb-2 border-b pb-2">Contrato 1 (RowID: ${contrato1.RowID})</h4><table class="w-full text-xs"><tbody>`;
-    htmlCol2 += `<h4 class="font-bold mb-2 border-b pb-2">Contrato 2 (RowID: ${contrato2.RowID})</h4><table class="w-full text-xs"><tbody>`;
-    todosCabecalhos.forEach(jsKey => {
-      if (jsKey === 'originalIndex') return;
-      const originalHeader = jsKeyToOriginalHeaderMap[jsKey] || jsKey;
-      const val1 = contrato1[jsKey] || '';
-      const val2 = contrato2[jsKey] || '';
-      const diferenca = val1 !== val2 ? 'diferente' : '';
-     
-      let displayVal1 = ['FinalVigencia', 'InicioVigencia', 'Assinatura'].includes(jsKey) ? formatDateBR(val1) : val1;
-      let displayVal2 = ['FinalVigencia', 'InicioVigencia', 'Assinatura'].includes(jsKey) ? formatDateBR(val2) : val2;
-      htmlCol1 += `<tr class="${diferenca}"><th class="font-semibold p-1 align-top w-1/3">${originalHeader}</th><td class="p-1">${displayVal1}</td></tr>`;
-      htmlCol2 += `<tr class="${diferenca}"><th class="font-semibold p-1 align-top w-1/3">${originalHeader}</th><td class="p-1">${displayVal2}</td></tr>`;
-    });
-    htmlCol1 += `</tbody></table><div class="text-right mt-4"><button class="excluir-comparado bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded" data-idx="${contrato1.originalIndex}">Excluir Este</button></div></div>`;
-    htmlCol2 += `</tbody></table><div class="text-right mt-4"><button class="excluir-comparado bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded" data-idx="${contrato2.originalIndex}">Excluir Este</button></div></div>`;
-    container.html(htmlCol1 + htmlCol2);
-    $('#compareModal').removeClass('hidden');
+  	const container = $('#compare-container');
+  	container.html(''); // Limpa o container
+  	const contratosParaComparar = indices.map(idx => contratos.find(c => c.originalIndex === idx));
+  	if (contratosParaComparar.length < 2) return; // Precisa de pelo menos 2 para comparar
+  	const contrato1 = contratosParaComparar[0];
+  	const contrato2 = contratosParaComparar[1];
+  	
+  	let htmlCol1 = '<div class="border rounded p-4">';
+  	let htmlCol2 = '<div class="border rounded p-4">';
+  	htmlCol1 += `<h4 class="font-bold mb-2 border-b pb-2">Contrato 1 (RowID: ${contrato1.RowID})</h4><table class="w-full text-xs"><tbody>`;
+  	htmlCol2 += `<h4 class="font-bold mb-2 border-b pb-2">Contrato 2 (RowID: ${contrato2.RowID})</h4><table class="w-full text-xs"><tbody>`;
+  	todosCabecalhos.forEach(jsKey => {
+  		if (jsKey === 'originalIndex') return;
+  		const originalHeader = jsKeyToOriginalHeaderMap[jsKey] || jsKey;
+  		const val1 = contrato1[jsKey] || '';
+  		const val2 = contrato2[jsKey] || '';
+  		const diferenca = val1 !== val2 ? 'diferente' : '';
+  		
+  		let displayVal1 = ['FinalVigencia', 'InicioVigencia', 'Assinatura'].includes(jsKey) ? formatDateBR(val1) : val1;
+  		let displayVal2 = ['FinalVigencia', 'InicioVigencia', 'Assinatura'].includes(jsKey) ? formatDateBR(val2) : val2;
+  		htmlCol1 += `<tr class="${diferenca}"><th class="font-semibold p-1 align-top w-1/3">${originalHeader}</th><td class="p-1">${displayVal1}</td></tr>`;
+  		htmlCol2 += `<tr class="${diferenca}"><th class="font-semibold p-1 align-top w-1/3">${originalHeader}</th><td class="p-1">${displayVal2}</td></tr>`;
+  	});
+  	htmlCol1 += `</tbody></table><div class="text-right mt-4"><button class="excluir-comparado bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded" data-idx="${contrato1.originalIndex}">Excluir Este</button></div></div>`;
+  	htmlCol2 += `</tbody></table><div class="text-right mt-4"><button class="excluir-comparado bg-red-600 hover:bg-red-700 text-white text-xs px-3 py-1 rounded" data-idx="${contrato2.originalIndex}">Excluir Este</button></div></div>`;
+  	container.html(htmlCol1 + htmlCol2);
+  	$('#compareModal').removeClass('hidden');
   }
   // --- INICIALIZAÇÃO ---
   $(document).ready(function() {
-    // CORREÇÃO: Registra o plugin do Chart.js uma única vez quando o documento está pronto.
-    if (typeof Chart !== 'undefined') {
-      Chart.register(ChartDataLabels);
-    }
-    function switchTab(activeTab) {
-        $('.nav-btn').removeClass('active').removeAttr('aria-current');
-        $(`#${activeTab}`).addClass('active').attr('aria-current', 'page');
-        $('main > div').addClass('hidden');
-        if (activeTab === 'navTabela') $('#painelTabela').removeClass('hidden');
-        else if (activeTab === 'navGraficos') $('#painelGraficos').removeClass('hidden');
-        else if (activeTab === 'navDuplicados') $('#painelDuplicados').removeClass('hidden');
-    }
-    // Navegação
-    $('#navTabela').on('click', () => switchTab('navTabela'));
-    $('#navGraficos').on('click', () => switchTab('navGraficos'));
-    $('#navDuplicados').on('click', () => switchTab('navDuplicados'));
-   
-    // Controles principais
-    $('#buscaUniversal').on('input', function() { termoBuscaUniversal = this.value.trim(); aplicarFiltros(); });
-    $('#filtros select').on('change', aplicarFiltros);
-    $('#limparFiltros').on('click', () => { $('#filtros select').val(''); termoBuscaUniversal = ''; $('#buscaUniversal').val(''); aplicarFiltros(); });
-   
-    // Botões com autenticação
-    $('#btnNovoContrato').on('click', () => { requestPassword(mostrarFormularioNovoContrato); });
-    $('body').on('click', '#btnEditarContrato', () => { requestPassword(() => mostrarFormularioEdicao(currentEditingContract)); });
-    $('body').on('click', '#btnExcluirContrato', solicitarExclusao);
-    // Modal de Senha
-    $('#passwordForm').on('submit', function(event) { event.preventDefault(); const password = $('#passwordInput').val(); if (password === ADMIN_PASSWORD) { sessionStorage.setItem('isAdminAuthenticated', 'true'); $('#passwordModal').addClass('hidden'); if (typeof _onAuthSuccess === 'function') { _onAuthSuccess(); } _onAuthSuccess = null; } else { $('#passwordError').removeClass('hidden'); } });
-    $('#cancelPassword').on('click', () => $('#passwordModal').addClass('hidden'));
-    // Modal de Confirmação de Exclusão
-    $('#cancelDelete').on('click', () => $('#confirmDeleteModal').addClass('hidden'));
-    $('#confirmDelete').on('click', excluirContrato);
-    // Modal de Comparação
-    $('body').on('click', '.comparar-duplicados', function() { const indices = JSON.parse($(this).attr('data-indices')); mostrarComparacao(indices); });
-    $('#closeCompareModal').on('click', () => $('#compareModal').addClass('hidden'));
-    $('body').on('click', '.excluir-comparado', function() {
-        const idx = $(this).data('idx');
-        currentEditingContract = contratos.find(c => c.originalIndex === idx);
-        solicitarExclusao();
-    });
-    // Modal de Edição/Detalhes
-    $('#form-edicao').on('submit', salvarAlteracoes);
-    $('#btnCancelarEdicao').on('click', () => { if (currentEditingContract) { $('#modal-display-view').removeClass('hidden'); $('#modal-edit-form').addClass('hidden'); } else { $('#modalDetalhes').addClass('hidden'); } });
-    $('#fecharModal').on('click', () => $('#modalDetalhes').addClass('hidden'));
-   
-    // Duplicados
-    renderizarCriterios();
-    $('#verificarDuplicados').on('click', verificarDuplicados);
-    // Eventos delegados para conteúdo dinâmico
-    $('body').on('click', '.ver-detalhes, .ver-detalhes-mini, .ver-detalhes-duplicados', function() { let idx = $(this).data('idx'); mostrarDetalhesContrato(contratos.find(c => c.originalIndex === idx)); });
-    $('body').on('click', '.btn-fiscal-cfiscon', function() { const nome = $(this).data('nome'); mostrarContratosFiscalCFISCON(nome); });
-    $('body').on('click', '.close-cfiscon-contratos', () => $('#cfiscon-contratos-lista').addClass('hidden'));
-    $('body').on('click', '.ver-mais-mini', function() { const boxId = $(this).data('box'); $(`#${boxId}-mini`).addClass('hidden'); $(`#${boxId}-full`).removeClass('hidden'); });
-    $('body').on('click', '.ver-menos-mini', function() { const boxId = $(this).data('box'); $(`#${boxId}-mini`).removeClass('hidden'); $(`#${boxId}-full`).addClass('hidden'); });
-    carregarContratosPlanilha();
+  	// CORREÇÃO: Registra o plugin do Chart.js uma única vez quando o documento está pronto.
+  	if (typeof Chart !== 'undefined') {
+  		Chart.register(ChartDataLabels);
+  	}
+  	function switchTab(activeTab) {
+  		$('.nav-btn').removeClass('active').removeAttr('aria-current');
+  		$(`#${activeTab}`).addClass('active').attr('aria-current', 'page');
+  		$('main > div').addClass('hidden');
+  		if (activeTab === 'navTabela') $('#painelTabela').removeClass('hidden');
+  		else if (activeTab === 'navGraficos') $('#painelGraficos').removeClass('hidden');
+  		else if (activeTab === 'navDuplicados') $('#painelDuplicados').removeClass('hidden');
+  	}
+  	// Navegação
+  	$('#navTabela').on('click', () => switchTab('navTabela'));
+  	$('#navGraficos').on('click', () => switchTab('navGraficos'));
+  	$('#navDuplicados').on('click', () => switchTab('navDuplicados'));
+  	
+  	// Controles principais
+  	$('#buscaUniversal').on('input', function() { termoBuscaUniversal = this.value.trim(); aplicarFiltros(); });
+  	$('#filtros select').on('change', aplicarFiltros);
+  	$('#limparFiltros').on('click', () => { $('#filtros select').val(''); termoBuscaUniversal = ''; $('#buscaUniversal').val(''); aplicarFiltros(); });
+  	
+  	// Botões com autenticação
+  	$('#btnNovoContrato').on('click', () => { requestPassword(mostrarFormularioNovoContrato); });
+  	$('body').on('click', '#btnEditarContrato', () => { requestPassword(() => mostrarFormularioEdicao(currentEditingContract)); });
+  	$('body').on('click', '#btnExcluirContrato', solicitarExclusao);
+  	// Modal de Senha
+  	$('#passwordForm').on('submit', function(event) { event.preventDefault(); const password = $('#passwordInput').val(); if (password === ADMIN_PASSWORD) { sessionStorage.setItem('isAdminAuthenticated', 'true'); $('#passwordModal').addClass('hidden'); if (typeof _onAuthSuccess === 'function') { _onAuthSuccess(); } _onAuthSuccess = null; } else { $('#passwordError').removeClass('hidden'); } });
+  	$('#cancelPassword').on('click', () => $('#passwordModal').addClass('hidden'));
+  	// Modal de Confirmação de Exclusão
+  	$('#cancelDelete').on('click', () => $('#confirmDeleteModal').addClass('hidden'));
+  	$('#confirmDelete').on('click', excluirContrato);
+  	// Modal de Comparação
+  	$('body').on('click', '.comparar-duplicados', function() { const indices = JSON.parse($(this).attr('data-indices')); mostrarComparacao(indices); });
+  	$('#closeCompareModal').on('click', () => $('#compareModal').addClass('hidden'));
+  	$('body').on('click', '.excluir-comparado', function() {
+  		const idx = $(this).data('idx');
+  		currentEditingContract = contratos.find(c => c.originalIndex === idx);
+  		solicitarExclusao();
+  	});
+  	// Modal de Edição/Detalhes
+  	$('#form-edicao').on('submit', salvarAlteracoes);
+  	$('#btnCancelarEdicao').on('click', () => { if (currentEditingContract) { $('#modal-display-view').removeClass('hidden'); $('#modal-edit-form').addClass('hidden'); } else { $('#modalDetalhes').addClass('hidden'); } });
+  	$('#fecharModal').on('click', () => $('#modalDetalhes').addClass('hidden'));
+  	
+  	// Duplicados
+  	renderizarCriterios();
+  	$('#verificarDuplicados').on('click', verificarDuplicados);
+  	// Eventos delegados para conteúdo dinâmico
+  	$('body').on('click', '.ver-detalhes, .ver-detalhes-mini, .ver-detalhes-duplicados', function() { let idx = $(this).data('idx'); mostrarDetalhesContrato(contratos.find(c => c.originalIndex === idx)); });
+  	$('body').on('click', '.btn-fiscal-cfiscon', function() { const nome = $(this).data('nome'); mostrarContratosFiscalCFISCON(nome); });
+  	$('body').on('click', '.close-cfiscon-contratos', () => $('#cfiscon-contratos-lista').addClass('hidden'));
+  	$('body').on('click', '.ver-mais-mini', function() { const boxId = $(this).data('box'); $(`#${boxId}-mini`).addClass('hidden'); $(`#${boxId}-full`).removeClass('hidden'); });
+  	$('body').on('click', '.ver-menos-mini', function() { const boxId = $(this).data('box'); $(`#${boxId}-mini`).removeClass('hidden'); $(`#${boxId}-full`).addClass('hidden'); });
+  	carregarContratosPlanilha();
   });
 </script>
 </body>
