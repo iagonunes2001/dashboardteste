@@ -197,15 +197,15 @@
   let chartSituacao = null, chartAno = null, chartPrazo = null;
   let termoBuscaUniversal = "";
 
-  // CORREÇÃO: Nomes simplificados na chave 'norm' para uma busca mais flexível.
+  // CORREÇÃO: Nomes normalizados completos para uma correspondência exata e confiável.
   const fiscaisCFISCON_EXIBIVEL = [ 
-      { norm: "CARMEN PADOIN", exib: "Carmen Lucia Ulguim Chagas Padoin" }, 
-      { norm: "MARCIA MENDES", exib: "Marcia Beheregaray Argollo Mendes" }, 
-      { norm: "MAURICIO ROSA", exib: "Mauricio Leandro Borges Rosa" }, 
-      { norm: "OTAVIO AFONSO", exib: "Otavio da Silva Afonso" }, 
-      { norm: "ARIADNE TUPY ASSU", exib: "Ariadne Silveira Tupy-Assú" }, 
-      { norm: "FERNANDA PEDERNEIRAS", exib: "Fernanda da Rosa Pederneiras" }, 
-      { norm: "FELIPE CURI", exib: "Felipe Paiva Curi" } 
+      { norm: "CARMEN LUCIA ULGUIM CHAGAS PADOIN", exib: "Carmen Lucia Ulguim Chagas Padoin" }, 
+      { norm: "MARCIA BEHEREGARAY ARGOLLO MENDES", exib: "Marcia Beheregaray Argollo Mendes" }, 
+      { norm: "MAURICIO LEANDRO BORGES ROSA", exib: "Mauricio Leandro Borges Rosa" }, 
+      { norm: "OTAVIO DA SILVA AFONSO", exib: "Otavio da Silva Afonso" }, 
+      { norm: "ARIADNE SILVEIRA TUPY ASSU", exib: "Ariadne Silveira Tupy-Assú" }, 
+      { norm: "FERNANDA DA ROSA PEDERNEIRAS", exib: "Fernanda da Rosa Pederneiras" }, 
+      { norm: "FELIPE PAIVA CURI", exib: "Felipe Paiva Curi" } 
   ];
   const CRITERIOS_SUGERIDOS = [ { id: 'NProcesso', label: 'N° Processo', checked: true }, { id: 'AnoProcesso', label: 'Ano Processo', checked: true }, { id: 'Contratado', label: 'Contratado', checked: true }, { id: 'CPFCNPJ', label: 'CPF/CNPJ', checked: false }, { id: 'Objeto', label: 'Objeto', checked: true }, { id: 'NContrato', label: 'N° Contrato', checked: false }, { id: 'AnoContrato', label: 'Ano Contrato', checked: false }, { id: 'InicioVigencia', label: 'Início Vigência', checked: false }, ];
   
@@ -245,16 +245,11 @@
   function agruparSituacao(sit) { if (!sit) return "Não Vigente"; const norm = (sit || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[–—-]/g, "-").replace(/\s+/g, " ").trim().toLowerCase(); if (norm.includes("encerrado")) return "Encerrado"; if (norm.includes("expirado")) return "Expirado"; if (norm.includes("vigente")) return "Vigente"; return "Não Vigente"; }
   function mapearTipoObjeto(objeto) { if (!objeto) return "Outros Serviços"; const objetoNorm = objeto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); if (objetoNorm.includes("fornecimento") || objetoNorm.includes("material") || objetoNorm.includes("compra")) { return "Compras"; } if (objetoNorm.includes("obra") || objetoNorm.includes("engenharia") || objetoNorm.includes("manutenção") || objetoNorm.includes("construção")) { return "Obras e Serviços de Engenharia"; } if (objetoNorm.includes("serviço") || objetoNorm.includes("locação") || objetoNorm.includes("alienação") || objetoNorm.includes("limpeza")) { return "Outros Serviços"; } return "Outros Serviços"; }
   
-  // CORREÇÃO: Lógica de verificação de fiscal mais flexível, baseada nos nomes simplificados.
+  // CORREÇÃO: Lógica de verificação de fiscal que usa a correspondência exata dos nomes normalizados.
   function contratoTemFiscalCFISCON(contrato) {
-    const fiscaisDoContrato = normalizarNomeFiscal(contrato.Fiscais ?? '');
-    if (!fiscaisDoContrato) return false;
-    
-    // Verifica se o nome de algum fiscal da C-FISCON (simplificado) está contido na lista de fiscais do contrato
-    return fiscaisCFISCON_EXIBIVEL.some(fiscal => {
-        const fiscalNameParts = fiscal.norm.split(' ');
-        // Checa se TODAS as partes do nome simplificado (ex: "CARMEN", "PADOIN") existem no campo de fiscais
-        return fiscalNameParts.every(part => fiscaisDoContrato.includes(part));
+    return (contrato.Fiscais ?? '').split(/[,;\n]+/).some(f => {
+        const nome = limparPrefixoNumero(f);
+        return fiscaisCFISCON_EXIBIVEL.some(fiscal => fiscal.norm === normalizarNomeFiscal(nome));
     });
   }
   
@@ -356,17 +351,12 @@
   // --- PAINEL C-FISCON E AVISOS ---
   function renderPainelFiscaisCFISCON() { let html = `<div class="mb-6 p-4 bg-[#E6ECEF] border-l-4 border-[#1E4069] rounded shadow"><strong>Contratos C-FISCON:</strong><div class="flex flex-wrap gap-2 mt-2">`; fiscaisCFISCON_EXIBIVEL.forEach(obj => { html += `<button class="btn-fiscal-cfiscon bg-[#1E4069] hover:bg-[#4DA8DA] text-white px-3 py-1 rounded text-xs font-semibold" data-nome="${obj.norm}">${obj.exib}</button>`; }); html += `</div><div id="cfiscon-contratos-lista" class="mt-4 hidden"></div></div>`; $('#painelFiscaisCFISCON').html(html); }
   
-  // CORREÇÃO: Lógica de busca de contratos por fiscal mais flexível, baseada nos nomes simplificados.
+  // CORREÇÃO: Lógica de busca de contratos por fiscal revertida para o método funcional.
   function mostrarContratosFiscalCFISCON(normFiscal) {
-    const fiscalNameParts = normFiscal.split(' '); // Ex: ["CARMEN", "PADOIN"]
-
-    let contratosDoFiscal = contratosFiltrados.filter(c => {
-        const fiscaisDoContrato = normalizarNomeFiscal(c.Fiscais ?? '');
-        if (!fiscaisDoContrato) return false;
-        
-        // Checa se TODAS as partes do nome simplificado (ex: "CARMEN", "PADOIN") existem no campo de fiscais
-        return fiscalNameParts.every(part => fiscaisDoContrato.includes(part));
-    });
+    let contratosDoFiscal = contratosFiltrados.filter(c => 
+      (c.Fiscais ?? '').split(/[,;\n]+/)
+        .some(f => normalizarNomeFiscal(limparPrefixoNumero(f)) === normFiscal)
+    );
     
     contratosDoFiscal.sort((a, b) => {
         const sitA = (a.Situacao || '').toLowerCase();
